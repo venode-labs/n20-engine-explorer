@@ -1,18 +1,20 @@
-# N20 Engine Explorer
+# Viscerra
 
-Independent technical exhibit of the BMW N20 fitted to a 2015 BMW 428i F32 (Australian market).
+Photographic-first technical exhibit for exploring real engines and their systems. The current launch exhibit documents the BMW N20 fitted to a 2015 BMW 428i F32 (Australian market).
 
 Not affiliated with BMW AG.
 
 ## What it is
 
-A museum-style explorer with three visual modes:
+Viscerra is built around a strict visual-truth rule: a real photograph is the primary reference. Schematic modes may explain the same layout, but they must never replace photographed hardware or invent missing detail.
+
+The current N20 exhibit has three visual modes:
 
 - **Photo** — licensed photographs of a real N20 (BMW Welt display and an F30 bay)
-- **3D** — schematic reconstruction you can orbit
+- **3D** — schematic reconstruction of the documented layout that you can orbit
 - **X-ray** — the same schematic with translucent shells
 
-Select parts, isolate systems, compare to the source photograph, and read verified technical notes (VIN-dependent items are labelled as such).
+Select parts, isolate systems, follow known connections, compare to the source photograph, and read verified technical notes. VIN-dependent items are explicitly labelled as requiring VIN verification.
 
 ## Photographs
 
@@ -25,7 +27,7 @@ npm install
 npm run dev
 ```
 
-Open the printed local URL. Production build:
+Production build:
 
 ```bash
 npm run build
