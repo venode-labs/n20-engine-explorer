@@ -144,7 +144,7 @@ export function ExplorerApp() {
                     </figcaption>
                   </figure>
                 )}
-                <div className="relative min-h-0 overflow-hidden">
+                <div className="relative h-full min-h-0 overflow-hidden">
                   <EngineCanvas photoId={photoId} />
                   {!schematic && <PlateLoader />}
                   <div className="exhibit-vignette" />
