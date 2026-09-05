@@ -3,7 +3,9 @@
   "private": true,
   "sideEffects": false,
   "type": "module",
-  "overrides": { "nf3": "0.3.17" },
+  "overrides": {
+    "nf3": "0.3.17"
+  },
   "scripts": {
     "dev": "node scripts/with-app-env.mjs vite dev --host 0.0.0.0 --port 8080",
     "build": "node scripts/with-app-env.mjs vite build && npm run db:migrate",
@@ -14,12 +16,13 @@
     "preview:stop": "node scripts/preview.mjs stop",
     "typecheck": "tsc --noEmit",
     "check:auth": "node scripts/check-auth-invariant.mjs",
-    "test": "node --test 'scripts/**/*.test.mjs' && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts",
+    "test": "node --test scripts/browser-smoke-verdict.test.mjs scripts/migration-plan.test.mjs scripts/preview.test.mjs scripts/sign-out-plan.test.mjs && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
     "release:gate": "node scripts/viscerra-release-gate.mjs",
     "visual:audit": "node scripts/viscerra-visual-audit.mjs",
-    "verify": "npm run release:gate && npm run typecheck && npm test && npm run build"
+    "verify": "npm run release:gate && npm run typecheck && npm test && npm run build",
+    "test:scaffold": "node --test 'scripts/**/*.test.mjs'"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.4",
@@ -55,7 +58,7 @@
     "@tanstack/router-plugin": "^1.168.0",
     "better-auth": "~1.6.30",
     "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
+    "clsx": "^1.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.0.0",
     "jose": "6.2.9",
