@@ -19,7 +19,7 @@ const WELT_HITS = [
 const BAY_HITS = ['engine-cover', 'oil-cap', 'oil-filter-module', 'oil-cooler', 'charge-pipe', 'airbox'];
 
 async function capture(name, viewport, route = '/', action) {
-  const page = await browser.newPage({ viewportSize: viewport });
+  const page = await browser.newPage({ viewport });
   const errors = [];
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', e => errors.push(e.message));
