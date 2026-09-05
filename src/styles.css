@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --color-bg: #0b0c0e;
+  --color-surface: #121417;
+  --color-elevated: #1a1d22;
+  --color-fg: #eceae4;
+  --color-muted: #8b8a84;
+  --color-subtle: #6a6964;
+  --color-border: #2a2d32;
+  --color-border-strong: #3c4046;
+  --color-accent: #8aa0b4;
+  --color-accent-fg: #0b0c0e;
+  --color-warn: #c4a070;
+  --color-ok: #8aa080;
+
+  --text-2xs: 0.6875rem;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+
+  --shadow-hud:
+    0 0 0 1px rgb(255 255 255 / 0.07),
+    0 16px 40px rgb(0 0 0 / 0.42);
+  --shadow-hud-hover: 0 0 0 1px rgb(255 255 255 / 0.12);
+
+  --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  html,
+  body,
+  #app {
+    height: 100%;
+    background: var(--color-bg);
+    color: var(--color-fg);
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@layer components {
+  .hud-panel {
+    border: 1px solid var(--color-border);
+    background: color-mix(in oklab, var(--color-surface) 92%, transparent);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-hud);
+    backdrop-filter: blur(10px);
+  }
+  .hud-scroll {
+    scrollbar-width: none;
+  }
+  .hud-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  .exhibit-vignette {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 42%, rgb(11 12 14 / 0.42) 100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

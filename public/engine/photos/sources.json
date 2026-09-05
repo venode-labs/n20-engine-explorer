@@ -1,0 +1,52 @@
+{
+  "photos": [
+    {
+      "id": "n20-welt",
+      "file": "n20-welt.jpg",
+      "role": "primary visual \u2014 BMW Welt display N20, cropped to engine",
+      "originalFile": "BMW N20 Engine.JPG",
+      "originalPixels": [
+        3456,
+        5184
+      ],
+      "author": "Hullie (AHHM van Hulten)",
+      "date": "2012-04-30",
+      "location": "BMW Welt, Munich (48.177047 N, 11.556436 E)",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:BMW_N20_Engine.JPG",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/2/2d/BMW_N20_Engine.JPG",
+      "sha256_original": "95520ca447747680da4f9e91bab92e274076ceae0f366b2b46e510120f90f431",
+      "n20Identity": "Verified: TwinPower Turbo acoustic cover, inline-4 proportions, plastic intake with DME on top, aluminium oil-filter module, turbo/heat-shield on exhaust side."
+    },
+    {
+      "id": "f30-bay",
+      "file": "f30-bay.jpg",
+      "role": "in-bay photographic view \u2014 F30 328i N20 installed",
+      "originalFile": "BMW 328i F30 2012 Motorraum 1.jpg",
+      "originalPixels": [
+        3888,
+        2592
+      ],
+      "author": "HLW",
+      "date": "2012-01-17",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:BMW_328i_F30_2012_Motorraum_1.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/e/e7/BMW_328i_F30_2012_Motorraum_1.jpg",
+      "sha256_original": "50eaa41b4b23e4dfef47d3fb8ac48e3a6151e44de81aec63f0c10fe9242ff488",
+      "n20Identity": "Verified: F30 328i 2012 engine bay, TwinPower Turbo cover, airbox vehicle-left, charge pipe across front. Early-2012 car may still use pre-06/2012 plastic oil-filter housing."
+    }
+  ],
+  "rejected": [
+    {
+      "id": "mundo-bmw-12",
+      "file": "Munich, Mundo BMW 12.jpg",
+      "reason": "BMW Welt 2015 display engine is a long inline-six cutaway, not an N20. Not ingested."
+    },
+    {
+      "id": "sketchfab-n20-615-06",
+      "reason": "Scaniverse photogrammetry of an N20 exists (joebrad91) but licence is CC BY-NC-SA. Non-commercial; not used."
+    }
+  ]
+}

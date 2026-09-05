@@ -1,0 +1,683 @@
+import type { EngineSystemId } from "./systems";
+
+export type PartNumberStatus = "verified" | "vin-required" | "not-applicable";
+export type Confidence = "verified" | "high" | "medium" | "unverified";
+
+export interface EngineComponent {
+  id: string;
+  canonicalName: string;
+  aliases: string[];
+  system: Exclude<EngineSystemId, "all">;
+  meshIds: string[];
+  description: string;
+  function: string;
+  howItWorks?: string;
+  location: string;
+  connectsTo: string[];
+  serviceAccess?: string;
+  inspectionNotes?: string[];
+  commonSymptoms?: string[];
+  bmwPartNumber?: string;
+  partNumberStatus: PartNumberStatus;
+  sourceRefs: string[];
+  confidence: Confidence;
+  bayOnly?: boolean;
+  diagramOnly?: boolean;
+}
+
+export const components: EngineComponent[] = [
+  {
+    id: "engine-cover",
+    canonicalName: "Engine acoustic cover",
+    aliases: ["beauty cover", "engine cover", "top cover", "acoustic cover"],
+    system: "mechanical",
+    meshIds: ["engine-cover"],
+    description:
+      "Black plastic acoustic cover over the valve cover and coils. On F3x N20 installations it is asymmetric: the roundel sits toward the bulkhead, TwinPower Turbo script is moulded beside it, and a cut-out on the intake side leaves the oil-filter module exposed.",
+    function: "Reduces radiated noise and presents a finished top surface. On pneumatic-wastegate engines the underside also carries the wastegate vacuum reservoir.",
+    howItWorks:
+      "The cover clips and bolts to the valve-cover area. It is not structural. ST1111 notes a vacuum reservoir permanently attached to the engine cover for wastegate actuation on the pneumatic variant.",
+    location: "Top of the N20, covering the coil row. Intake-side cut-out around the oil-filter module. Bulkhead end faces the F32 firewall.",
+    connectsTo: ["vacuum-reservoir", "valve-cover", "ignition-coils"],
+    serviceAccess: "Lifted first for almost every top-end inspection. Do not pry on the vacuum-reservoir tabs — they break and the cover is then scrap.",
+    inspectionNotes: [
+      "Confirm whether this cover includes the vacuum reservoir (pneumatic wastegate) — actuation method is VIN-dependent.",
+      "Broken locating tabs are common after careless removal.",
+    ],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111", "visualBay", "fcpValveCover"],
+    confidence: "verified",
+  },
+  {
+    id: "vacuum-reservoir",
+    canonicalName: "Wastegate vacuum reservoir",
+    aliases: ["vacuum canister", "vacuum tank", "wastegate reservoir"],
+    system: "vacuum",
+    meshIds: ["vacuum-reservoir"],
+    description:
+      "Small reservoir attached to the engine cover on N20 engines that use a vacuum-actuated wastegate. ST1111 lists it as permanently attached to the engine cover.",
+    function: "Stores vacuum from the two-stage vacuum pump so the wastegate actuator can be modulated by the electro-pneumatic pressure converter.",
+    location: "Integrated with the acoustic cover, typically on the underside / intake edge of the cover.",
+    connectsTo: ["engine-cover", "vacuum-pump", "wastegate"],
+    inspectionNotes: [
+      "Not every N20 uses a pneumatic wastegate. Confirm on the vehicle — VIN verification required.",
+    ],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111"],
+    confidence: "high",
+  },
+  {
+    id: "valve-cover",
+    canonicalName: "Cylinder head cover",
+    aliases: ["cam cover", "rocker cover", "valve cover", "PCV cover"],
+    system: "mechanical",
+    meshIds: ["valve-cover"],
+    description:
+      "Black plastic N20 cylinder-head cover. Distinctive features: two large coil windows, a front oil-filler boss, an integrated crankcase-ventilation separator volume, and provision for VANOS at the timing end. ST1111 describes a two-part crankcase ventilation system inside this cover.",
+    function: "Seals the cam gallery, locates the coils, houses oil separation for blow-by, and carries the oil filler.",
+    howItWorks:
+      "Blow-by enters the cover, passes spring-tab separators and a pressure-control valve, then is metered back into the intake path. Non-return valves switch the return path between naturally aspirated and boosted operation.",
+    location: "Bolted to the aluminium cylinder head. Oil cap at the timing / front end; HPFP occupies the bulkhead end of the head just behind this cover.",
+    connectsTo: ["oil-cap", "ignition-coils", "cylinder-head", "engine-cover", "hpfp"],
+    serviceAccess: "Common leak path at the gasket perimeter and at the VCG half-moons. Replacement is a top-end job with the beauty cover and coils off.",
+    inspectionNotes: [
+      "Look for oil around the perimeter and down the timing face.",
+      "Crankcase-ventilation failure can load the intake with oil — not a diagnosis from appearance alone.",
+    ],
+    commonSymptoms: [
+      "Oil seepage around the cover perimeter",
+      "Oil smell in the cabin or bay after heat-soak",
+      "Whistle / boost leak if a PCV hose is split (confirm by inspection)",
+    ],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111", "fcpValveCover"],
+    confidence: "verified",
+  },
+  {
+    id: "oil-cap",
+    canonicalName: "Oil filler cap",
+    aliases: ["oil cap", "filler cap"],
+    system: "lubrication",
+    meshIds: ["oil-cap"],
+    description: "Filler cap on the front of the N20 valve cover. In the F3x bay it sits at the front of the engine, intake-side of centre.",
+    function: "Service access for engine oil. Opened during an oil change to let the sump vent while draining.",
+    location: "Timing end of the valve cover, visible at the front of the acoustic cover.",
+    connectsTo: ["valve-cover"],
+    serviceAccess: "Open before draining oil so the sump vents.",
+    partNumberStatus: "vin-required",
+    sourceRefs: ["bmwrepairOil", "visualBay"],
+    confidence: "verified",
+  },
+  {
+    id: "ignition-coils",
+    canonicalName: "Ignition coils",
+    aliases: ["coils", "coil packs", "pencil coils", "ignition"],
+    system: "ignition",
+    meshIds: ["ignition-coils"],
+    description:
+      "Four pencil (stick) coils, one per cylinder, seated in the valve-cover windows in firing-line order. ST1111 indexes them as DME items 33–36.",
+    function: "Each coil fires its spark plug on command from the Bosch MEVD17.2.4 DME.",
+    location: "In a row along the cylinder-head centreline, under the acoustic cover.",
+    connectsTo: ["valve-cover", "dme"],
+    serviceAccess: "Accessible once the acoustic cover is removed. Coils pull vertically.",
+    inspectionNotes: [
+      "Look for tracking, oil in the plug wells, and brittle boots.",
+      "Do not treat a misfire as a failed coil without a diagnostic test.",
+    ],
+    commonSymptoms: [
+      "Misfire under load (possible associated symptom — not a diagnosis)",
+      "Rough idle after heat-soak",
+    ],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111", "fcpValveCover"],
+    confidence: "verified",
+  },
+  {
+    id: "cylinder-head",
+    canonicalName: "Cylinder head",
+    aliases: ["head", "camshaft housing"],
+    system: "mechanical",
+    meshIds: ["cylinder-head"],
+    description:
+      "Aluminium N20 head carrying Valvetronic III (eccentric shaft, intermediate levers, servomotor), double VANOS with central valves, the HPFP roller tappet on the exhaust cam, and direct-injection seats.",
+    function: "Contains the intake and exhaust ports, valves, camshafts, and the Valvetronic / VANOS hardware that meters air without relying on the throttle for load control.",
+    howItWorks:
+      "Valvetronic varies intake-valve lift via the eccentric shaft. VANOS varies intake and exhaust cam timing through central-valve actuators. Together they implement TVDI load control.",
+    location: "On the crankcase, longitudinal, four cylinders. Intake ports face vehicle-left; exhaust ports face vehicle-right into the twin-scroll manifold.",
+    connectsTo: [
+      "crankcase",
+      "valve-cover",
+      "valvetronic-motor",
+      "vanos-intake",
+      "vanos-exhaust",
+      "hpfp",
+      "intake-manifold",
+      "exhaust-manifold",
+    ],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111"],
+    confidence: "high",
+  },
+  {
+    id: "valvetronic-motor",
+    canonicalName: "Valvetronic servomotor",
+    aliases: ["valvetronic", "VVT motor", "eccentric shaft motor", "valve lift motor"],
+    system: "mechanical",
+    meshIds: ["valvetronic-motor"],
+    description:
+      "Third-generation Valvetronic servomotor. ST1111 states the N20 uses the same servomotor as the N55, including installation position, driving a worm gear onto the eccentric shaft.",
+    function: "Sets intake-valve lift, which is the primary air-metering device on TVDI engines. The throttle plate stays largely open in normal running.",
+    location: "Intake side of the cylinder head. The electrical connector is visible with the acoustic cover off (photographed on F3x N20/N26).",
+    connectsTo: ["cylinder-head", "dme"],
+    inspectionNotes: [
+      "ST1111: the oil spray nozzle that lubricates the worm gear must sit in its guide on the motor — no special tool, but it must click into the guide.",
+    ],
+    commonSymptoms: [
+      "Fault lamp with Valvetronic-related codes (needs diagnosis)",
+      "Limp operation with reduced lift range",
+    ],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111", "fcpValveCover"],
+    confidence: "verified",
+  },
+  {
+    id: "vanos-intake",
+    canonicalName: "Intake VANOS actuator",
+    aliases: ["VANOS", "intake cam solenoid", "cam phaser intake"],
+    system: "mechanical",
+    meshIds: ["vanos-intake"],
+    description:
+      "New-generation VANOS with a central valve on the intake camshaft. The actuator sits at the timing (front) end of the head.",
+    function: "Varies intake-cam timing under DME map control, working with Valvetronic for torque, emissions, and idle quality.",
+    location: "Front of the cylinder head, intake side of the timing face.",
+    connectsTo: ["cylinder-head", "vanos-exhaust", "dme"],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111"],
+    confidence: "high",
+  },
+  {
+    id: "vanos-exhaust",
+    canonicalName: "Exhaust VANOS actuator",
+    aliases: ["exhaust VANOS", "exhaust cam solenoid", "cam phaser exhaust"],
+    system: "mechanical",
+    meshIds: ["vanos-exhaust"],
+    description: "Central-valve VANOS actuator for the exhaust camshaft, paired with the intake unit at the timing end of the head.",
+    function: "Varies exhaust-cam timing. The exhaust cam also drives the HPFP via a triple lobe.",
+    location: "Front of the cylinder head, exhaust side of the timing face.",
+    connectsTo: ["cylinder-head", "vanos-intake", "hpfp", "dme"],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111"],
+    confidence: "high",
+  },
+  {
+    id: "crankcase",
+    canonicalName: "Crankcase (block and bedplate)",
+    aliases: ["block", "engine block", "crankcase", "bedplate"],
+    system: "mechanical",
+    meshIds: ["crankcase"],
+    description:
+      "Two-piece aluminium crankcase: upper block plus bedplate, with electrically arc-sprayed (EAS) cylinder bore coating rather than liners. ST1111 documents this structure, the cooling jacket, and oil / blow-by ducts in the casting.",
+    function: "Carries the crankshaft, four EAS-coated bores (84 mm), coolant jacket, and oil galleries. The timing drive is in the front of this casting — FCP Euro notes the ‘timing cover’ is part of the block on N20.",
+    location: "Longitudinal in the F32 bay, four cylinders in line. Flywheel / bellhousing faces the bulkhead; accessory drive faces the radiator.",
+    connectsTo: ["cylinder-head", "oil-sump", "oil-filter-module", "crank-pulley", "exhaust-manifold"],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111", "fcpOfh"],
+    confidence: "high",
+  },
+  {
+    id: "oil-sump",
+    canonicalName: "Oil sump",
+    aliases: ["oil pan", "sump"],
+    system: "lubrication",
+    meshIds: ["oil-sump"],
+    description:
+      "Aluminium oil sump. ST1111 places the map-controlled pendulum-slide oil pump and the counterbalance-shaft housing toward the flywheel end, chain-driven from the front of the crankshaft.",
+    function: "Oil reservoir. Houses the pickup, oil pump, and counterbalance shafts that cancel inline-four second-order vibration.",
+    location: "Underside of the crankcase. Pump is at the flywheel end; drain is in the sump floor.",
+    connectsTo: ["crankcase", "oil-filter-module"],
+    serviceAccess: "Drain plug from below. Pump itself is not a top-side service item.",
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111"],
+    confidence: "high",
+  },
+  {
+    id: "oil-filter-module",
+    canonicalName: "Oil filter module",
+    aliases: ["oil filter", "oil filter housing", "OFH", "filter housing"],
+    system: "lubrication",
+    meshIds: ["oil-filter-module"],
+    description:
+      "Combined oil-filter housing and oil-to-coolant heat exchanger on the intake side of the engine. ST1111 calls the assembly the oil-filter module. A BMW TSB (SI B11 12 12) records a change from black plastic housings (before 06/2012) to silver aluminium housings (from 06/2012). A 2015 F32 is expected to use the aluminium housing — confirm on the vehicle.",
+    function: "Full-flow filtration with a non-return diaphragm on the element, plus raw-oil cooling: the heat exchanger sits in the circuit ahead of the filter.",
+    location:
+      "Intake side, front half of the engine, left of the acoustic cover in an F3x bay. Cartridge cap is a large black plastic cover (86 mm wrench) on top of the aluminium body.",
+    connectsTo: ["oil-cooler", "crankcase", "intake-manifold", "electric-coolant-pump"],
+    serviceAccess:
+      "Filter is a top-access cartridge. Housing-gasket replacement is involved: the intake manifold obstructs the rearward housing bolt (BMW TIS calls for manifold removal).",
+    inspectionNotes: [
+      "Oil seepage at the housing-to-head/block gasket is a well-known N20 leak path.",
+      "Coolant will spill if the heat exchanger is opened — the cooler is on the engine oil-to-coolant circuit.",
+    ],
+    commonSymptoms: [
+      "Oil drips under the intake side after overnight parking",
+      "Oil on the alternator / belt (inspect; N20 balancer design is less prone to belt ingestion than N54/N55)",
+    ],
+    bmwPartNumber: "11 42 7 640 862",
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111", "nhtsaB111212", "bmwrepairOil", "fcpOfh"],
+    confidence: "verified",
+  },
+  {
+    id: "oil-cooler",
+    canonicalName: "Engine oil-to-coolant heat exchanger",
+    aliases: ["oil cooler", "oil heat exchanger", "OFH cooler"],
+    system: "lubrication",
+    meshIds: ["oil-cooler"],
+    description:
+      "Stacked-plate heat exchanger mounted on the oil-filter module. ST1111: the exchanger is in the oil circuit ahead of the filter (raw-oil cooling), unlike clean-oil cooling layouts.",
+    function: "Transfers heat between engine oil and coolant so oil temperature can be brought up and then held in a useful range.",
+    location: "Intake/front corner, the silver plate-pack beside the black filter cap.",
+    connectsTo: ["oil-filter-module", "electric-coolant-pump"],
+    inspectionNotes: ["A failed cooler gasket can mix oil and coolant — confirm with a cooling-system inspection, do not assume from colour alone."],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111", "visualBay"],
+    confidence: "verified",
+  },
+  {
+    id: "intake-manifold",
+    canonicalName: "Intake manifold",
+    aliases: ["inlet manifold", "plenum"],
+    system: "air",
+    meshIds: ["intake-manifold"],
+    description:
+      "Plastic intake manifold on the vehicle-left (intake) side of the head. Four runners, throttle at the bulkhead end, DME mounted on top with an aluminium heat-spreader. ST1111: load is normally metered by Valvetronic, so the throttle is not the primary air valve.",
+    function: "Distributes charge air from the throttle into the four intake ports. Also a mounting and cooling surface for the DME.",
+    location: "Intake side of the head, under / inboard of the airbox in the F3x bay. Throttle faces the firewall.",
+    connectsTo: ["throttle-body", "dme", "cylinder-head", "charge-pipe", "oil-filter-module"],
+    serviceAccess: "Must be slackened or removed to reach the rearward oil-filter-housing bolt.",
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111", "fcpOfh"],
+    confidence: "high",
+  },
+  {
+    id: "throttle-body",
+    canonicalName: "Throttle body",
+    aliases: ["throttle", "throttle valve", "drive-by-wire"],
+    system: "air",
+    meshIds: ["throttle-body"],
+    description:
+      "Electronically controlled throttle at the bulkhead end of the intake manifold. On TVDI it is used for idle, overrun, and emergency load control; Valvetronic handles most load control.",
+    function: "Backup / auxiliary air metering and a closed-plate seal for shutdown and certain diagnostic checks.",
+    location: "Rear of the intake manifold, facing the F32 firewall.",
+    connectsTo: ["intake-manifold", "charge-pipe", "dme"],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111"],
+    confidence: "verified",
+  },
+  {
+    id: "dme",
+    canonicalName: "Digital engine electronics (DME)",
+    aliases: ["ECU", "ECM", "DME", "engine computer", "MEVD"],
+    system: "electrical",
+    meshIds: ["dme"],
+    description:
+      "Bosch MEVD17.2.4, engine-mounted on the intake manifold. ST1111: related to the N55 MEVD17.2, cooled by intake-manifold airflow through an aluminium heatsink plate.",
+    function: "Engine management: Valvetronic, VANOS, ignition, injection, boost (wastegate / blow-off), and heat management of the electric coolant pump and map thermostat.",
+    location: "On top of the intake manifold, intake side of the engine. Must be disconnected / moved to fully remove the manifold.",
+    connectsTo: ["intake-manifold", "ignition-coils", "valvetronic-motor", "hpfp", "vanos-intake", "vanos-exhaust"],
+    serviceAccess: "In the way of intake-manifold removal. Do not treat a DME as interchangeable across calibrations — VIN required.",
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111", "fcpOfh"],
+    confidence: "verified",
+  },
+  {
+    id: "turbocharger",
+    canonicalName: "Twin-scroll turbocharger",
+    aliases: ["turbo", "twin scroll", "twin-scroll", "exhaust turbocharger", "charger"],
+    system: "air",
+    meshIds: ["turbocharger"],
+    description:
+      "Twin-scroll exhaust turbocharger welded to the exhaust manifold. ST1111: the turbine housing is split so cylinders 1+4 and 2+3 feed separate scrolls, preserving exhaust pulse energy. Wastegate and blow-off valve are integrated.",
+    function: "Uses exhaust energy to compress intake air. Twin-scroll pairing (360° crank interval between paired cylinders) reduces interference between exhaust events on a four-cylinder.",
+    howItWorks:
+      "Exhaust from 1+4 and 2+3 stays separated until the turbine wheel. Compressed air leaves the compressor housing toward the charge-air cooler. A blow-off valve dumps surge on throttle close; a wastegate bypasses the turbine to limit boost.",
+    location: "Exhaust (vehicle-right) side of the engine, mid-block height, with the compressor inlet visible above the heat shielding in F3x bays.",
+    connectsTo: ["exhaust-manifold", "wastegate", "blow-off-valve", "boost-pipe", "catalyst-interface", "charge-pipe"],
+    serviceAccess: "Tight against the heat shield and downpipe. Oil and coolant feed/return lines must be treated as live circuits.",
+    inspectionNotes: [
+      "Heat-soak colouring on the turbine housing is normal.",
+      "Play at the compressor wheel, oil in the intake, or a cracked wastegate arm need inspection — not a diagnosis from this viewer.",
+    ],
+    commonSymptoms: [
+      "Whistle or boost deviation (possible associated symptom)",
+      "Blue smoke if turbo seals are migrating oil (confirm by inspection)",
+    ],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111", "visualBay"],
+    confidence: "verified",
+  },
+  {
+    id: "wastegate",
+    canonicalName: "Wastegate (integrated)",
+    aliases: ["wastegate actuator", "boost control"],
+    system: "air",
+    meshIds: ["wastegate"],
+    description:
+      "Integrated turbine bypass. ST1111 shows a vacuum unit on the wastegate with an electro-pneumatic pressure converter. Some later N20 turbos use a different actuation method — VIN-dependent.",
+    function: "Bypasses exhaust around the turbine to limit and modulate boost.",
+    location: "On the turbocharger turbine housing, exhaust side.",
+    connectsTo: ["turbocharger", "vacuum-reservoir", "vacuum-pump"],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111"],
+    confidence: "high",
+  },
+  {
+    id: "blow-off-valve",
+    canonicalName: "Blow-off valve",
+    aliases: ["BOV", "diverter", "recirculation valve", "dump valve"],
+    system: "air",
+    meshIds: ["blow-off-valve"],
+    description: "ST1111 lists an integrated blow-off valve on the N20 turbocharger compressor circuit.",
+    function: "Recirculates or dumps compressor-discharge air when the throttle closes, preventing compressor surge.",
+    location: "Compressor side of the turbocharger / adjacent charge plumbing.",
+    connectsTo: ["turbocharger", "boost-pipe"],
+    commonSymptoms: [
+      "Chatter on lift-off if the valve sticks (possible associated symptom)",
+      "Boost leak if the diaphragm splits",
+    ],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111"],
+    confidence: "high",
+  },
+  {
+    id: "exhaust-manifold",
+    canonicalName: "Exhaust manifold (twin-scroll)",
+    aliases: ["exhaust", "header", "manifold"],
+    system: "exhaust",
+    meshIds: ["exhaust-manifold"],
+    description:
+      "Air-gap-insulated four-into-two manifold welded to the turbocharger. ST1111: ports for cylinders 1 and 4 form one scroll feed; cylinders 2 and 3 form the other.",
+    function: "Delivers exhaust pulses to the twin-scroll turbine with reduced heat loss (air-gap insulation) and without pairing cylinders that fire 180° apart onto the same scroll.",
+    location: "Exhaust side of the head, feeding the turbocharger directly. Cylinder 1 is the timing/front cylinder.",
+    connectsTo: ["cylinder-head", "turbocharger", "catalyst-interface"],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111"],
+    confidence: "high",
+  },
+  {
+    id: "catalyst-interface",
+    canonicalName: "Close-coupled catalyst interface",
+    aliases: ["cat", "downpipe", "catalytic converter"],
+    system: "exhaust",
+    meshIds: ["catalyst-interface"],
+    description:
+      "ST1111: upstream catalytic converter with two ceramic monoliths (0.75 l / 118.4 mm / 600 cpsi then 0.99 l / 125 mm / 400 cpsi), control oxygen sensor at the turbine outlet, monitoring sensor between monoliths. Only the turbine-outlet interface is modelled here.",
+    function: "Treats exhaust immediately after the turbine. Sensor placement is specified so the control sensor can see all four cylinders.",
+    location: "Below / aft of the turbine outlet, dropping toward the F32 downpipe path. Full converter body is not in this reconstruction.",
+    connectsTo: ["turbocharger", "exhaust-manifold"],
+    diagramOnly: true,
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111"],
+    confidence: "high",
+  },
+  {
+    id: "boost-pipe",
+    canonicalName: "Compressor outlet (boost pipe)",
+    aliases: ["boost pipe", "hot pipe", "turbo outlet"],
+    system: "air",
+    meshIds: ["boost-pipe"],
+    description:
+      "Pipe from the compressor discharge toward the charge-air cooler in the cooling pack. Exact bend radii are chassis plumbing — treated as a schematic segment in this reconstruction.",
+    function: "Carries hot compressed air to the charge-air cooler.",
+    location: "Leaves the turbo compressor housing toward the front of the engine bay.",
+    connectsTo: ["turbocharger", "blow-off-valve", "intercooler"],
+    partNumberStatus: "not-applicable",
+    sourceRefs: ["st1111", "visualBay"],
+    confidence: "medium",
+  },
+  {
+    id: "charge-pipe",
+    canonicalName: "Charge pipe",
+    aliases: ["cold side", "charge pipe", "inlet pipe"],
+    system: "air",
+    meshIds: ["charge-pipe"],
+    description:
+      "Pipe from the charge-air cooler back to the throttle body. In F3x photographs a black pipe crosses the front of the engine, low, before turning to the bulkhead-end throttle.",
+    function: "Delivers cooled charge air to the throttle / manifold.",
+    location: "Across the front of the N20, then to the throttle at the firewall end of the intake manifold.",
+    connectsTo: ["throttle-body", "intercooler", "intake-manifold"],
+    inspectionNotes: ["Aftermarket charge pipes are common; the factory part is plastic. Clamps and the MAP/T sensor boss are leak points."],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111", "visualBay"],
+    confidence: "high",
+  },
+  {
+    id: "intercooler",
+    canonicalName: "Charge-air cooler",
+    aliases: ["intercooler", "CAC", "charge air cooler"],
+    system: "air",
+    meshIds: ["intercooler"],
+    description:
+      "Air-to-air charge-air cooler in the cooling pack, not on the engine. ST1111 includes it in the intake path between turbocharger and throttle. Shown only in the engine-bay view.",
+    function: "Rejects heat from compressed intake air before it reaches the throttle.",
+    location: "Front of the F32, in the cooling pack ahead of / below the radiator circuit. Exact stack order is not asserted here.",
+    connectsTo: ["boost-pipe", "charge-pipe"],
+    bayOnly: true,
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111"],
+    confidence: "high",
+  },
+  {
+    id: "airbox",
+    canonicalName: "Intake silencer (airbox)",
+    aliases: ["airbox", "air box", "intake", "air filter box", "MAF housing"],
+    system: "air",
+    meshIds: ["airbox"],
+    description:
+      "Intake silencer on the left of the F3x bay, permanently attached in the ST1111 intake path, with a hot-film air-mass meter. Vehicle plumbing — shown in the engine-bay view.",
+    function: "Filters and meters intake air before the compressor.",
+    location: "Vehicle-left of the N20 in the F32 bay, beside the oil-filter module.",
+    connectsTo: ["turbocharger"],
+    bayOnly: true,
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111", "visualBay"],
+    confidence: "high",
+  },
+  {
+    id: "hpfp",
+    canonicalName: "High-pressure fuel pump",
+    aliases: ["HPFP", "high pressure pump", "fuel pump", "HDP"],
+    system: "fuel",
+    meshIds: ["hpfp"],
+    description:
+      "Bosch single-plunger high-pressure pump driven from the exhaust camshaft by a triple lobe and roller tappet. ST1111: no low-pressure fuel sensor — pressure is a calculated value. Sits at the bulkhead end of the cylinder head.",
+    function: "Raises supply-rail pressure for direct injection (system pressure up to 200 bar in the ST1111 description).",
+    howItWorks:
+      "A quantity-control valve on the pump meters how much fuel is compressed each cam revolution. High-pressure lines from the pump to the rail are a soldered/welded assembly in the factory system.",
+    location: "Rear centre of the cylinder head, against the F32 firewall. Cylindrical aluminium body with the electrical connector and the high-pressure line union on top.",
+    connectsTo: ["fuel-rail", "cylinder-head", "vanos-exhaust", "dme"],
+    serviceAccess:
+      "BMW Repair Guide: fuel lines at the rear centre of the engine; union nuts on the high-pressure line; pump mounting screws loosened in small alternating steps. Cam lobe must be at its lowest point before a new pump is fitted.",
+    inspectionNotes: [
+      "Pre-03/2014 pumps and later replacements can use different electrical connectors — VIN / production date required.",
+      "Never drop debris into the pump bore.",
+    ],
+    commonSymptoms: [
+      "Long crank or no-start (possible associated symptom)",
+      "Hesitation under load with fuel-pressure faults (needs diagnosis)",
+    ],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111", "bmwrepairHpfp", "fcpValveCover"],
+    confidence: "verified",
+  },
+  {
+    id: "fuel-rail",
+    canonicalName: "High-pressure fuel rail",
+    aliases: ["rail", "fuel rail", "HP rail"],
+    system: "fuel",
+    meshIds: ["fuel-rail"],
+    description: "High-pressure rail on the intake side of the head. ST1111: rail feeds four solenoid injectors via welded/soldered high-pressure lines.",
+    function: "Distributes high-pressure fuel to the four direct injectors and provides the volume that damps pump pulsation.",
+    location: "Along the intake side of the cylinder head, under the coil harness, with a steel line back to the HPFP.",
+    connectsTo: ["hpfp", "injectors"],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111", "fcpValveCover"],
+    confidence: "high",
+  },
+  {
+    id: "injectors",
+    canonicalName: "Direct injectors",
+    aliases: ["injectors", "DI injectors", "GDI", "nozzles"],
+    system: "fuel",
+    meshIds: ["injectors"],
+    description:
+      "Four Bosch solenoid injectors (ST1111: HDEV5.2 family, inward-opening multi-hole, plastic-sheathed stem). System pressure up to 200 bar in the training description.",
+    function: "Meter fuel directly into the combustion chambers on DME command.",
+    location: "Seated in the head under the rail, one per cylinder, intake side.",
+    connectsTo: ["fuel-rail", "cylinder-head", "dme"],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111"],
+    confidence: "high",
+  },
+  {
+    id: "alternator",
+    canonicalName: "Alternator",
+    aliases: ["generator", "alternator", "dyno"],
+    system: "accessories",
+    meshIds: ["alternator"],
+    description:
+      "Belt-driven alternator on the intake/front corner, visually under the oil-filter module in F3x photographs. ST1111 lists it on the main belt drive.",
+    function: "Charges the electrical system. The F32 battery itself is not in the engine bay (boot-mounted on this chassis family) — that packaging is vehicle-level, not engine-level.",
+    location: "Front of the engine, intake side, below the oil-filter module.",
+    connectsTo: ["serpentine-belt", "crank-pulley", "oil-filter-module"],
+    inspectionNotes: ["Oil from a leaking filter-housing gasket can coat the alternator. Cleanliness is an inspection note, not a diagnosis."],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111", "visualBay"],
+    confidence: "verified",
+  },
+  {
+    id: "ac-compressor",
+    canonicalName: "A/C compressor",
+    aliases: ["air con", "AC", "air conditioning compressor", "compressor"],
+    system: "accessories",
+    meshIds: ["ac-compressor"],
+    description: "Belt-driven air-conditioning compressor on the low front of the accessory drive. ST1111 lists the A/C compressor pulley on the main belt drive.",
+    function: "Compresses refrigerant for the cabin HVAC circuit.",
+    location: "Lower front of the engine, on the serpentine belt.",
+    connectsTo: ["serpentine-belt", "crank-pulley"],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111"],
+    confidence: "high",
+  },
+  {
+    id: "serpentine-belt",
+    canonicalName: "Serpentine belt",
+    aliases: ["belt", "drive belt", "accessory belt"],
+    system: "accessories",
+    meshIds: ["serpentine-belt"],
+    description:
+      "Single poly-V belt driving the alternator and A/C compressor from the crank pulley. There is no belt-driven coolant pump on N20 (electric pump) and no hydraulic power-steering pump on F32 (electric steering). Path of idlers is schematic.",
+    function: "Transmits crankshaft rotation to the remaining belt accessories.",
+    location: "Front face of the engine.",
+    connectsTo: ["crank-pulley", "alternator", "ac-compressor", "belt-tensioner"],
+    inspectionNotes: [
+      "FCP Euro: N20 uses a conventional harmonic balancer, so an oil-soaked belt is less likely to be dragged into the crank seal than on N54/N55 — still inspect and replace a contaminated belt.",
+    ],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111", "fcpOfh"],
+    confidence: "high",
+  },
+  {
+    id: "belt-tensioner",
+    canonicalName: "Belt tensioner",
+    aliases: ["tensioner", "idler", "belt tensioner"],
+    system: "accessories",
+    meshIds: ["belt-tensioner"],
+    description: "Spring tensioner on the N20 accessory drive. Exact body is a layout reconstruction.",
+    function: "Maintains belt tension as the belt wears and as accessories load.",
+    location: "Front accessory drive, between crank and driven pulleys.",
+    connectsTo: ["serpentine-belt"],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111"],
+    confidence: "medium",
+  },
+  {
+    id: "crank-pulley",
+    canonicalName: "Crankshaft pulley / harmonic balancer",
+    aliases: ["crank pulley", "harmonic balancer", "damper", "harmonic damper"],
+    system: "accessories",
+    meshIds: ["crank-pulley"],
+    description:
+      "Front crankshaft pulley with a conventional harmonic balancer. FCP Euro contrasts this with the N54/N55 design that can ingest a belt into the front seal.",
+    function: "Drives the serpentine belt and damps crankshaft torsional vibration.",
+    location: "Front centre of the engine, below the timing face.",
+    connectsTo: ["crankcase", "serpentine-belt"],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["fcpOfh", "st1111"],
+    confidence: "high",
+  },
+  {
+    id: "electric-coolant-pump",
+    canonicalName: "Electric coolant pump",
+    aliases: ["water pump", "coolant pump", "electric water pump", "EWP"],
+    system: "cooling",
+    meshIds: ["electric-coolant-pump"],
+    description:
+      "Map-controlled electric coolant pump, 400 W nominal per ST1111, at the front of the engine. Not belt-driven — a defining N20 (and N55-family) difference from older mechanical-pump layouts.",
+    function: "Circulates coolant independently of engine speed, allowing heat-management modes (ST1111 lists economy / normal / high temperature targets and protection thresholds).",
+    location: "Front of the engine, intake side of the crank centreline, off the belt plane.",
+    connectsTo: ["map-thermostat", "oil-cooler", "crankcase"],
+    commonSymptoms: [
+      "Overheat or heater-core complaints with pump-related faults (needs diagnosis)",
+      "Auxiliary cooling after shutdown (normal behaviour when commanded)",
+    ],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111"],
+    confidence: "high",
+  },
+  {
+    id: "map-thermostat",
+    canonicalName: "Map-controlled thermostat",
+    aliases: ["thermostat", "map thermostat"],
+    system: "cooling",
+    meshIds: ["map-thermostat"],
+    description:
+      "ST1111: map thermostat that begins to open at 97 °C and is fully open at 109 °C, used with the electric pump for heat management.",
+    function: "Varies coolant temperature by map, not by a single wax-stat point.",
+    location: "Cooling-circuit housing at the front / intake region of the engine. Exact housing reconstructed.",
+    connectsTo: ["electric-coolant-pump", "crankcase"],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111"],
+    confidence: "high",
+  },
+  {
+    id: "vacuum-pump",
+    canonicalName: "Vacuum pump",
+    aliases: ["brake vacuum pump", "tandem pump"],
+    system: "vacuum",
+    meshIds: ["vacuum-pump"],
+    description:
+      "Two-stage vacuum pump. ST1111: majority of vacuum is for the brake servo; also supplies the wastegate converter and an exhaust-flap circuit. Reservoir for the wastegate is on the engine cover.",
+    function: "Provides vacuum for brake boost and turbo wastegate control on pneumatic-wastegate engines.",
+    location: "Engine-driven; reconstruction places it at the bulkhead / exhaust-cam end of the head — confirm on the vehicle before using this as a removal guide.",
+    connectsTo: ["vacuum-reservoir", "wastegate"],
+    partNumberStatus: "vin-required",
+    sourceRefs: ["st1111"],
+    confidence: "medium",
+  },
+];
+
+export const componentById: Record<string, EngineComponent> = Object.fromEntries(
+  components.map((c) => [c.id, c]),
+);
+
+export function searchComponents(query: string): EngineComponent[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return components;
+  return components.filter((c) => {
+    if (c.canonicalName.toLowerCase().includes(q)) return true;
+    if (c.id.toLowerCase().includes(q)) return true;
+    if (c.system.toLowerCase().includes(q)) return true;
+    return c.aliases.some((a) => a.toLowerCase().includes(q));
+  });
+}
