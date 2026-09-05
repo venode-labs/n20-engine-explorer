@@ -14,7 +14,7 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "Photographic-first interactive technical exhibit. This edition documents the BMW N20 fitted to the Australian 2015 BMW 428i F32. Independent. Not affiliated with BMW AG.",
+          "Photographic-first interactive engine anatomy exhibit. Current specimen: BMW N20B20 in a 2015 BMW 428i F32, Australian market. Independent; not affiliated with BMW AG.",
       },
       { name: "theme-color", content: "#0b0c0e" },
     ],

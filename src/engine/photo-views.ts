@@ -10,12 +10,9 @@ export interface UvRect {
 export interface PhotoHit {
   id: string;
   rect: UvRect;
-  /** Higher draws later / sits closer for picking. */
+  /** Higher sits closer for picking when rectangles overlap. */
   layer?: number;
-  /**
-   * Optical depth in this photograph (0 = recedes, 3 = nearest the camera).
-   * Used only for relief parallax — not a measured engine dimension.
-   */
+  /** Optical depth in this photograph, used only for relief parallax. */
   depth?: number;
 }
 
@@ -27,13 +24,11 @@ export interface PhotoView {
   credit: string;
   license: string;
   sourcePage: string;
-  /** Plane size in metres (approximate engine envelope). */
   width: number;
   height: number;
   hits: PhotoHit[];
 }
 
-/** Convert a UV rectangle (origin top-left) to a plane-local centre + size. */
 export function uvRectToLocal(rect: UvRect, width: number, height: number) {
   const u = (rect.u0 + rect.u1) / 2;
   const v = (rect.v0 + rect.v1) / 2;
@@ -56,52 +51,43 @@ export function cameraFromUv(
   const y = (0.5 - v) * view.height;
   const half = Math.max(view.width, view.height) / 2;
   const fit = half / Math.tan(((fov * Math.PI) / 180) / 2);
-  const dist = (fit * 1.08) / zoom;
-  return {
-    position: [x, y, dist],
-    target: [x, y, 0],
-  };
+  const dist = (fit * 1.0) / zoom;
+  return { position: [x, y, dist], target: [x, y, 0] };
 }
 
 /**
  * BMW Welt display N20 — Hullie, 30 Apr 2012, CC BY-SA 3.0.
- * UV origin top-left on the engine crop (`n20-welt.jpg`).
- * Depth is optical in this three-quarter view (exhaust/turbo nearer camera).
+ * UV origin top-left on n20-welt.jpg, 2489×2489.
+ * Only hardware re-verified against per-hit crops is selectable here.
  */
 const WELT_HITS: PhotoHit[] = [
-  { id: "oil-cap", rect: { u0: 0.36, v0: 0.04, u1: 0.48, v1: 0.16 }, layer: 3, depth: 1 },
-  { id: "dme", rect: { u0: 0.62, v0: 0.08, u1: 0.84, v1: 0.26 }, layer: 3, depth: 0 },
-  { id: "vanos-intake", rect: { u0: 0.42, v0: 0.1, u1: 0.54, v1: 0.24 }, layer: 2, depth: 1 },
-  { id: "vanos-exhaust", rect: { u0: 0.26, v0: 0.1, u1: 0.4, v1: 0.24 }, layer: 2, depth: 1 },
-  { id: "valvetronic-motor", rect: { u0: 0.48, v0: 0.16, u1: 0.62, v1: 0.32 }, layer: 2, depth: 1 },
-  { id: "map-thermostat", rect: { u0: 0.54, v0: 0.38, u1: 0.66, v1: 0.5 }, layer: 2, depth: 1 },
-  { id: "crank-pulley", rect: { u0: 0.34, v0: 0.66, u1: 0.48, v1: 0.82 }, layer: 2, depth: 3 },
-  { id: "belt-tensioner", rect: { u0: 0.2, v0: 0.48, u1: 0.34, v1: 0.64 }, layer: 2, depth: 3 },
-  { id: "oil-cooler", rect: { u0: 0.7, v0: 0.28, u1: 0.86, v1: 0.46 }, layer: 2, depth: 0 },
-  { id: "throttle-body", rect: { u0: 0.8, v0: 0.14, u1: 0.96, v1: 0.32 }, layer: 2, depth: 0 },
-  { id: "electric-coolant-pump", rect: { u0: 0.64, v0: 0.48, u1: 0.8, v1: 0.64 }, layer: 2, depth: 1 },
-  { id: "oil-filter-module", rect: { u0: 0.52, v0: 0.22, u1: 0.78, v1: 0.5 }, layer: 1, depth: 1 },
-  { id: "alternator", rect: { u0: 0.5, v0: 0.44, u1: 0.72, v1: 0.62 }, layer: 1, depth: 2 },
-  { id: "intake-manifold", rect: { u0: 0.68, v0: 0.2, u1: 0.94, v1: 0.46 }, layer: 1, depth: 0 },
-  { id: "boost-pipe", rect: { u0: 0.06, v0: 0.36, u1: 0.28, v1: 0.54 }, layer: 1, depth: 3 },
-  { id: "charge-pipe", rect: { u0: 0.2, v0: 0.42, u1: 0.52, v1: 0.58 }, layer: 1, depth: 2 },
-  { id: "turbocharger", rect: { u0: 0.0, v0: 0.28, u1: 0.26, v1: 0.54 }, layer: 1, depth: 3 },
-  { id: "exhaust-manifold", rect: { u0: 0.06, v0: 0.18, u1: 0.28, v1: 0.36 }, layer: 1, depth: 3 },
-  { id: "serpentine-belt", rect: { u0: 0.3, v0: 0.54, u1: 0.54, v1: 0.76 }, layer: 1, depth: 3 },
-  { id: "ac-compressor", rect: { u0: 0.4, v0: 0.7, u1: 0.56, v1: 0.9 }, layer: 1, depth: 3 },
-  { id: "engine-cover", rect: { u0: 0.22, v0: 0.08, u1: 0.52, v1: 0.4 }, layer: 0, depth: 1 },
-  { id: "cylinder-head", rect: { u0: 0.22, v0: 0.28, u1: 0.5, v1: 0.44 }, layer: 0, depth: 1 },
-  { id: "crankcase", rect: { u0: 0.28, v0: 0.4, u1: 0.54, v1: 0.64 }, layer: 0, depth: 2 },
-  { id: "oil-sump", rect: { u0: 0.22, v0: 0.62, u1: 0.58, v1: 0.9 }, layer: 0, depth: 2 },
+  // VERIFIED 06/09/2026 against the 2489×2489 Hullie crop. Keep this list conservative.
+  { id: "engine-cover", rect: { u0: 0.0157, v0: 0.0165, u1: 0.6436, v1: 0.4134 }, layer: 0, depth: 1 },
+  { id: "oil-cap", rect: { u0: 0.0346, v0: 0.1499, u1: 0.1551, v1: 0.2451 }, layer: 4, depth: 2 },
+  { id: "oil-filter-module", rect: { u0: 0.6557, v0: 0.0611, u1: 0.8236, v1: 0.1450 }, layer: 3, depth: 1 },
+  { id: "oil-cooler", rect: { u0: 0.6448, v0: 0.1462, u1: 0.9237, v1: 0.3491 }, layer: 3, depth: 2 },
+  { id: "alternator", rect: { u0: 0.6766, v0: 0.3499, u1: 0.9036, v1: 0.5235 }, layer: 2, depth: 2 },
+  { id: "serpentine-belt", rect: { u0: 0.7256, v0: 0.4564, u1: 0.7935, v1: 0.5235 }, layer: 4, depth: 3 },
+  { id: "ac-compressor", rect: { u0: 0.7613, v0: 0.5163, u1: 0.9534, v1: 0.7336 }, layer: 2, depth: 3 },
+  { id: "crank-pulley", rect: { u0: 0.4456, v0: 0.6613, u1: 0.7236, v1: 0.8734 }, layer: 3, depth: 3 },
+  { id: "electric-coolant-pump", rect: { u0: 0.2857, v0: 0.7814, u1: 0.4737, v1: 0.9534 }, layer: 2, depth: 3 },
+  { id: "turbocharger", rect: { u0: 0.0346, v0: 0.4500, u1: 0.3005, v1: 0.7151 }, layer: 2, depth: 3 },
+  { id: "boost-pipe", rect: { u0: 0.0960, v0: 0.6163, u1: 0.2037, v1: 0.7087 }, layer: 4, depth: 3 },
 ];
 
+/**
+ * F30 328i engine bay — HLW, CC BY-SA 3.0.
+ * UV origin top-left on f30-bay.jpg, 2560×1706.
+ * This reference plate is not represented as the Australian F32 itself.
+ */
 const BAY_HITS: PhotoHit[] = [
-  { id: "oil-filter-module", rect: { u0: 0.28, v0: 0.42, u1: 0.42, v1: 0.6 }, layer: 2, depth: 2 },
-  { id: "intake-manifold", rect: { u0: 0.3, v0: 0.32, u1: 0.42, v1: 0.5 }, layer: 2, depth: 2 },
-  { id: "charge-pipe", rect: { u0: 0.32, v0: 0.56, u1: 0.72, v1: 0.72 }, layer: 1, depth: 3 },
-  { id: "airbox", rect: { u0: 0.08, v0: 0.28, u1: 0.32, v1: 0.62 }, layer: 1, depth: 2 },
-  { id: "engine-cover", rect: { u0: 0.36, v0: 0.36, u1: 0.62, v1: 0.62 }, layer: 1, depth: 1 },
-  { id: "intercooler", rect: { u0: 0.22, v0: 0.72, u1: 0.75, v1: 0.92 }, layer: 0, depth: 3 },
+  // VERIFIED 06/09/2026 against the 2560×1706 F30 bay plate. No hidden/occluded hardware is marked.
+  { id: "engine-cover", rect: { u0: 0.230, v0: 0.080, u1: 0.660, v1: 0.545 }, layer: 0, depth: 1 },
+  { id: "oil-cap", rect: { u0: 0.238, v0: 0.355, u1: 0.302, v1: 0.455 }, layer: 4, depth: 2 },
+  { id: "oil-filter-module", rect: { u0: 0.505, v0: 0.345, u1: 0.607, v1: 0.465 }, layer: 3, depth: 2 },
+  { id: "oil-cooler", rect: { u0: 0.500, v0: 0.440, u1: 0.635, v1: 0.565 }, layer: 3, depth: 2 },
+  { id: "charge-pipe", rect: { u0: 0.635, v0: 0.285, u1: 0.700, v1: 0.580 }, layer: 3, depth: 2 },
+  { id: "airbox", rect: { u0: 0.185, v0: 0.570, u1: 0.785, v1: 0.845 }, layer: 1, depth: 2 },
 ];
 
 export const photoViews: Record<PhotoId, PhotoView> = {

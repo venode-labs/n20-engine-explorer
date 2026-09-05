@@ -102,8 +102,8 @@ function PhotoScene({ photoId }: { photoId: "welt" | "bay" }) {
         enableRotate={!compare}
         enablePan={!compare}
         dampingFactor={0.12}
-        minDistance={span * 0.34}
-        maxDistance={span * 2.2}
+        minDistance={span * 0.28}
+        maxDistance={span * 1.30}
         minPolarAngle={Math.PI * 0.42}
         maxPolarAngle={Math.PI * 0.58}
         minAzimuthAngle={-0.48}
@@ -115,12 +115,71 @@ function PhotoScene({ photoId }: { photoId: "welt" | "bay" }) {
   );
 }
 
+function makeStudioEnv(gl: THREE.WebGLRenderer) {
+  const pmrem = new THREE.PMREMGenerator(gl);
+  const sc = new THREE.Scene();
+  sc.add(new THREE.HemisphereLight("#f3f6fa", "#2c2a26", 1.35));
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshBasicMaterial({ color: "#f4f6f8" }));
+  ceil.rotation.x = Math.PI / 2;
+  ceil.position.y = 3.2;
+  sc.add(ceil);
+  const wall = new THREE.Mesh(new THREE.PlaneGeometry(10, 6), new THREE.MeshBasicMaterial({ color: "#dbe3ec" }));
+  wall.position.z = -4;
+  sc.add(wall);
+  const warm = new THREE.Mesh(new THREE.PlaneGeometry(10, 6), new THREE.MeshBasicMaterial({ color: "#e7d7c2" }));
+  warm.rotation.y = -Math.PI / 2;
+  warm.position.x = 4;
+  sc.add(warm);
+  const cool = new THREE.Mesh(new THREE.PlaneGeometry(10, 6), new THREE.MeshBasicMaterial({ color: "#cfd8e4" }));
+  cool.rotation.y = Math.PI / 2;
+  cool.position.x = -4;
+  sc.add(cool);
+  const tex = pmrem.fromScene(sc, 0.04).texture;
+  sc.traverse((obj) => {
+    const mesh = obj as THREE.Mesh;
+    if (mesh.geometry) mesh.geometry.dispose();
+    const mat = mesh.material as THREE.Material | THREE.Material[] | undefined;
+    if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
+    else mat?.dispose();
+  });
+  return { tex, pmrem };
+}
+
+function StudioEnv() {
+  const { gl, scene } = useThree();
+  useEffect(() => {
+    let tex: THREE.Texture | null = null;
+    let pmrem: THREE.PMREMGenerator | null = null;
+    try {
+      const env = makeStudioEnv(gl);
+      tex = env.tex;
+      pmrem = env.pmrem;
+      scene.environment = tex;
+      scene.environmentIntensity = 1.35;
+    } catch {
+      scene.environment = null;
+    }
+    return () => {
+      scene.environment = null;
+      tex?.dispose();
+      pmrem?.dispose();
+    };
+  }, [gl, scene]);
+  return null;
+}
+
 function ModelGround() {
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.28, 0]} raycast={() => undefined}>
-      <circleGeometry args={[1.8, 48]} />
-      <meshBasicMaterial color="#101214" />
-    </mesh>
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.28, 0]} raycast={() => undefined}>
+        <circleGeometry args={[2.1, 64]} />
+        <meshStandardMaterial color="#16181c" metalness={0} roughness={1} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.279, 0]} raycast={() => undefined}>
+        <ringGeometry args={[0.62, 0.635, 80]} />
+        <meshBasicMaterial color="#4a5560" />
+      </mesh>
+    </group>
   );
 }
 
@@ -128,11 +187,14 @@ function ModelScene({ xray }: { xray: boolean }) {
   const start = MODEL_PRESETS.hero;
   return (
     <>
-      <fog attach="fog" args={[xray ? "#07080a" : "#0b0c0e", 2.4, 8]} />
-      <hemisphereLight args={xray ? ["#9aafc0", "#0c1014", 0.7] : ["#d0d4da", "#1a1c20", 0.9]} />
-      <directionalLight position={[2.2, 3.2, 1.6]} intensity={xray ? 1.05 : 1.45} />
-      <directionalLight position={[-2.4, 1.1, -1.2]} intensity={xray ? 0.7 : 0.42} />
-      <directionalLight position={[0.2, 1.4, 2.4]} intensity={xray ? 0.45 : 0.55} />
+      <fog attach="fog" args={[xray ? "#0a0c10" : "#101216", 8, 18]} />
+      <StudioEnv />
+      <ambientLight intensity={xray ? 1.0 : 1.25} />
+      <hemisphereLight args={xray ? ["#c6d4df", "#1a1e24", 1.45] : ["#f3f5f7", "#2a2e34", 1.7]} />
+      <directionalLight position={[2.6, 4.2, 2.4]} intensity={xray ? 2.8 : 3.8} />
+      <directionalLight position={[-2.4, 2.2, 1.2]} intensity={xray ? 1.8 : 2.1} />
+      <directionalLight position={[0.2, 2.4, 3.2]} intensity={xray ? 0.9 : 1.5} />
+      <directionalLight position={[1.2, 1.2, -2.4]} intensity={0.7} />
       <ModelGround />
       <group>
         <N20Assembly />
@@ -142,7 +204,7 @@ function ModelScene({ xray }: { xray: boolean }) {
         enableDamping
         dampingFactor={0.1}
         minDistance={0.32}
-        maxDistance={3.4}
+        maxDistance={2.45}
         minPolarAngle={0.12}
         maxPolarAngle={Math.PI * 0.86}
         target={start.target}
@@ -204,7 +266,7 @@ export function EngineCanvas({ photoId = "welt" }: { photoId?: "welt" | "bay" })
       style={{ width: "100%", height: "100%", display: "block" }}
       onPointerMissed={() => select(null)}
     >
-      <color attach="background" args={[visualMode === "xray" ? "#07080a" : "#0b0c0e"]} />
+      <color attach="background" args={[visualMode === "xray" ? "#0b0d10" : schematic ? "#12141a" : "#0b0c0e"]} />
       <Suspense fallback={null}>
         {schematic ? <ModelScene xray={visualMode === "xray"} /> : <PhotoScene photoId={photoId} />}
       </Suspense>

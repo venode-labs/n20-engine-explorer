@@ -18,9 +18,12 @@ interface ExplorerState {
   visualMode: VisualMode;
   appView: AppView;
   compareMode: boolean;
+  explode: number;
   vinDraft: string;
   vinOpen: boolean;
   webgl: boolean;
+  helpOpen: boolean;
+  paletteOpen: boolean;
   select: (id: string | null, opts?: { frame?: boolean }) => void;
   hover: (id: string | null) => void;
   setSystem: (s: EngineSystemId) => void;
@@ -31,9 +34,12 @@ interface ExplorerState {
   setVisualMode: (m: VisualMode) => void;
   setAppView: (v: AppView) => void;
   setCompareMode: (v: boolean) => void;
+  setExplode: (v: number) => void;
   setVinDraft: (v: string) => void;
   setVinOpen: (v: boolean) => void;
   setWebgl: (v: boolean) => void;
+  setHelpOpen: (v: boolean) => void;
+  setPaletteOpen: (v: boolean) => void;
 }
 
 export const useExplorer = create<ExplorerState>((set) => ({
@@ -48,9 +54,12 @@ export const useExplorer = create<ExplorerState>((set) => ({
   visualMode: "photo",
   appView: "engine",
   compareMode: false,
+  explode: 0,
   vinDraft: "",
   vinOpen: false,
   webgl: true,
+  helpOpen: false,
+  paletteOpen: false,
   select: (id, opts) =>
     set((s) => ({
       selectedId: id,
@@ -66,12 +75,14 @@ export const useExplorer = create<ExplorerState>((set) => ({
       cameraNonce: s.cameraNonce + 1,
       materialMode: "normal",
       compareMode: false,
+      explode: 0,
     })),
   setMaterialMode: (materialMode) => set({ materialMode }),
   setVisualMode: (visualMode) =>
     set((s) => ({
       visualMode,
       compareMode: visualMode === "photo" ? s.compareMode : false,
+      explode: visualMode === "photo" ? 0 : s.explode,
       cameraNonce: s.cameraNonce + 1,
       cameraPreset:
         visualMode !== "photo" && s.cameraPreset === "bay"
@@ -92,9 +103,12 @@ export const useExplorer = create<ExplorerState>((set) => ({
       cameraPreset: compareMode && s.visualMode === "photo" ? (s.appView === "bay" ? "bay" : "hero") : s.cameraPreset,
       cameraNonce: compareMode ? s.cameraNonce + 1 : s.cameraNonce,
     })),
+  setExplode: (explode) => set({ explode: Math.min(1, Math.max(0, explode)) }),
   setVinDraft: (vinDraft) => set({ vinDraft }),
   setVinOpen: (vinOpen) => set({ vinOpen }),
   setWebgl: (webgl) => set({ webgl }),
+  setHelpOpen: (helpOpen) => set({ helpOpen }),
+  setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
 }));
 
 export function selectedComponent(): EngineComponent | null {

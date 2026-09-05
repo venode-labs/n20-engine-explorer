@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { X } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { Box, Camera, Scan, X } from "lucide-react";
 import { componentById } from "@/data/components";
 import { sources, authorityLabel } from "@/data/sources";
+import { systemById } from "@/data/systems";
 import { meshIdentity } from "@/lib/mesh-identity";
 import { hitsForPart } from "@/engine/photo-views";
 import { useExplorer } from "@/store/explorer";
@@ -14,10 +15,21 @@ function Pill({ children, tone = "accent" }: { children: string; tone?: "accent"
   return <span className={cn("text-2xs uppercase tracking-wide", color)}>{children}</span>;
 }
 
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="mt-5 space-y-2">
+      <p className="kicker">{title}</p>
+      {children}
+    </section>
+  );
+}
+
 export function Inspector({ onClose, plain }: { onClose?: () => void; plain?: boolean }) {
   const selectedId = useExplorer((s) => s.selectedId);
   const select = useExplorer((s) => s.select);
-  const visualMode = useExplorer((s) => s.visualMode);
+  const visualMode = useExplorer((s) => s.setVisualMode);
+  const currentVisual = useExplorer((s) => s.visualMode);
+  const setAppView = useExplorer((s) => s.setAppView);
   const [openHow, setOpenHow] = useState(true);
   const part = selectedId ? componentById[selectedId] : null;
   const ident = selectedId ? meshIdentity[selectedId] : null;
@@ -26,10 +38,10 @@ export function Inspector({ onClose, plain }: { onClose?: () => void; plain?: bo
   if (!part) {
     return (
       <aside className={shell}>
-        <div className="flex items-start justify-between gap-2 border-b border-border px-4 py-3">
+        <div className="flex items-start justify-between gap-2 border-b border-border px-4 py-4">
           <div>
-            <p className="text-2xs uppercase tracking-wide text-muted">Component</p>
-            <h2 className="mt-1 text-sm text-fg">Nothing selected</h2>
+            <p className="kicker">Exhibit 01</p>
+            <h2 className="mt-1 text-base font-medium tracking-tight text-fg">BMW N20B20</h2>
           </div>
           {onClose ? (
             <button type="button" className={iconBtn} aria-label="Close inspector" onClick={onClose}>
@@ -37,30 +49,28 @@ export function Inspector({ onClose, plain }: { onClose?: () => void; plain?: bo
             </button>
           ) : null}
         </div>
-        <div className="space-y-3 px-4 py-4 text-sm leading-relaxed text-muted">
-          <p>Click the engine, or pick a part from the catalogue.</p>
-          <p className="text-2xs uppercase tracking-wide text-subtle">↑↓ to step · Esc to clear</p>
-          {visualMode !== "photo" && (
-            <p className="text-2xs leading-relaxed text-subtle">
-              {visualMode === "xray"
-                ? "X-ray is a schematic of the 3D reconstruction. The photograph is under Photo."
-                : "You are looking at a schematic 3D reconstruction, not the real photograph."}
-            </p>
-          )}
+        <div className="space-y-4 px-4 py-4 text-sm leading-relaxed text-muted">
+          <p>2015 428i F32 · Australia · RHD. The plate is a photograph of a physical N20.</p>
+          <p>Click the engine, pick from the catalogue, or press / to search.</p>
+          <p className="kicker">↑↓ step · Esc clear · 1–3 views</p>
         </div>
       </aside>
     );
   }
 
+  const sys = systemById[part.system];
   const confidenceTone = part.confidence === "verified" ? "ok" : part.confidence === "medium" ? "warn" : "accent";
+  const onPlate = hitsForPart(part.id).length > 0;
+  const schematicOnly = !onPlate && !part.bayOnly;
 
   return (
     <aside className={shell}>
-      <div className="flex items-start justify-between gap-2 border-b border-border px-4 py-3">
+      <div className="flex items-start justify-between gap-2 border-b border-border px-4 py-4">
         <div className="min-w-0">
-          <p className="text-2xs uppercase tracking-wide text-muted">Component</p>
-          <h2 className="mt-1 text-base font-medium text-balance text-fg">{part.canonicalName}</h2>
-          <p className="mt-1 text-2xs uppercase tracking-wide text-subtle">{part.system}</p>
+          <p className="kicker">
+            {sys?.index} · {sys?.label ?? part.system}
+          </p>
+          <h2 className="mt-1 text-lg font-medium tracking-tight text-balance text-fg">{part.canonicalName}</h2>
         </div>
         <button
           type="button"
@@ -75,16 +85,48 @@ export function Inspector({ onClose, plain }: { onClose?: () => void; plain?: bo
         </button>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-        <section className="space-y-2">
-          <p className="text-2xs uppercase tracking-wide text-muted">Function</p>
-          <p className="text-sm leading-relaxed text-pretty text-fg">{part.function}</p>
-        </section>
-        <section className="mt-5 space-y-2">
-          <p className="text-2xs uppercase tracking-wide text-muted">Location on the N20</p>
+        <p className="text-sm leading-relaxed text-pretty text-fg">{part.function}</p>
+
+        {schematicOnly && currentVisual === "photo" && (
+          <button
+            type="button"
+            onClick={() => visualMode("model")}
+            className="mt-4 flex w-full items-center gap-2 rounded-[4px] border border-border bg-elevated px-3 py-2.5 text-left text-xs text-fg hover:border-border-strong"
+          >
+            <Box className="size-3.5 shrink-0 text-accent" strokeWidth={1.75} />
+            Not marked on this photograph. Open the 3D schematic.
+          </button>
+        )}
+        {part.bayOnly && (
+          <button
+            type="button"
+            onClick={() => setAppView("bay")}
+            className="mt-4 w-full rounded-[4px] border border-border bg-elevated px-3 py-2.5 text-left text-xs text-fg"
+          >
+            This part lives in the engine bay, not on the isolated display engine.
+          </button>
+        )}
+
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          <button type="button" className={cn(chipBtn, "border border-border")} onClick={() => visualMode("photo")}>
+            <Camera className="mr-1 size-3.5" strokeWidth={1.75} />
+            Photo
+          </button>
+          <button type="button" className={cn(chipBtn, "border border-border")} onClick={() => visualMode("model")}>
+            <Box className="mr-1 size-3.5" strokeWidth={1.75} />
+            3D
+          </button>
+          <button type="button" className={cn(chipBtn, "border border-border")} onClick={() => visualMode("xray")}>
+            <Scan className="mr-1 size-3.5" strokeWidth={1.75} />
+            X-ray
+          </button>
+        </div>
+
+        <Section title="Location on the N20">
           <p className="text-sm leading-relaxed text-pretty text-fg">{part.location}</p>
-        </section>
-        <section className="mt-5 space-y-2">
-          <p className="text-2xs uppercase tracking-wide text-muted">Connected to</p>
+        </Section>
+
+        <Section title="Connected to">
           <div className="flex flex-wrap gap-1">
             {part.connectsTo.map((id) => {
               const c = componentById[id];
@@ -101,12 +143,13 @@ export function Inspector({ onClose, plain }: { onClose?: () => void; plain?: bo
               );
             })}
           </div>
-        </section>
+        </Section>
+
         {part.howItWorks && (
           <section className="mt-5">
             <button
               type="button"
-              className="h-11 text-2xs uppercase tracking-wide text-muted hover:text-fg"
+              className="h-9 text-2xs uppercase tracking-wide text-muted hover:text-fg"
               onClick={() => setOpenHow((v) => !v)}
               aria-expanded={openHow}
             >
@@ -115,53 +158,62 @@ export function Inspector({ onClose, plain }: { onClose?: () => void; plain?: bo
             {openHow && <p className="mt-1 text-sm leading-relaxed text-pretty text-fg">{part.howItWorks}</p>}
           </section>
         )}
+
         {part.inspectionNotes && (
-          <section className="mt-5 space-y-2">
-            <p className="text-2xs uppercase tracking-wide text-muted">Inspection</p>
+          <Section title="Inspection">
             <ul className="list-disc space-y-1 pl-4 text-sm leading-relaxed text-fg">
               {part.inspectionNotes.map((n) => (
                 <li key={n}>{n}</li>
               ))}
             </ul>
             {part.serviceAccess && <p className="text-sm text-muted">{part.serviceAccess}</p>}
-          </section>
+          </Section>
         )}
+
         {part.commonSymptoms && (
-          <section className="mt-5 space-y-2">
-            <p className="text-2xs uppercase tracking-wide text-muted">Associated symptoms</p>
+          <Section title="Associated symptoms">
             <ul className="list-disc space-y-1 pl-4 text-sm leading-relaxed text-fg">
               {part.commonSymptoms.map((n) => (
                 <li key={n}>{n}</li>
               ))}
             </ul>
             <p className="text-2xs text-subtle">Symptoms are associations, not a diagnosis.</p>
-          </section>
+          </Section>
         )}
-        <section className="mt-5 space-y-2 border-t border-border pt-4">
-          <p className="text-2xs uppercase tracking-wide text-muted">OEM identification</p>
+
+        <Section title="OEM identification">
           <p className="text-sm text-fg">
-            {part.partNumberStatus === "vin-required" ? (
+            {part.bmwPartNumber ? (
+              <>
+                <span className="font-mono tracking-wide">{part.bmwPartNumber}</span>
+                {part.partNumberStatus === "vin-required" ? (
+                  <span className="mt-1 block">
+                    <Pill tone="warn">VIN required to confirm</Pill>
+                  </span>
+                ) : null}
+              </>
+            ) : part.partNumberStatus === "vin-required" ? (
               <Pill tone="warn">VIN required for exact OE component</Pill>
             ) : part.partNumberStatus === "not-applicable" ? (
               "Not applicable"
             ) : (
-              part.bmwPartNumber
+              "Not listed"
             )}
           </p>
-        </section>
-        <section className="mt-5 space-y-2">
-          <p className="text-2xs uppercase tracking-wide text-muted">Confidence</p>
+        </Section>
+
+        <Section title="Confidence">
           <p className="text-sm text-fg">
             <Pill tone={confidenceTone}>{part.confidence}</Pill>
             {ident ? ` · capture ${ident.status}` : null}
           </p>
           {ident && <p className="text-2xs leading-relaxed text-subtle">{ident.basis}</p>}
-          {hitsForPart(part.id).length === 0 ? (
+          {!onPlate ? (
             <p className="text-2xs leading-relaxed text-warn">
               Not marked on the current photographs — identified from ST1111 / service references, not from a visible
               region in the capture set.
             </p>
-          ) : visualMode === "photo" ? (
+          ) : currentVisual === "photo" ? (
             <p className="text-2xs leading-relaxed text-subtle">
               Highlighted on the photographic plate. The outline is an overlay — the surface remains the photograph.
             </p>
@@ -170,9 +222,9 @@ export function Inspector({ onClose, plain }: { onClose?: () => void; plain?: bo
               Highlighted on the 3D schematic. Switch to Photo to see the same component on the real engine.
             </p>
           )}
-        </section>
-        <section className="mt-5 space-y-2">
-          <p className="text-2xs uppercase tracking-wide text-muted">Sources</p>
+        </Section>
+
+        <Section title="Sources">
           <ul className="space-y-2">
             {part.sourceRefs.map((id) => {
               const s = sources[id];
@@ -197,7 +249,7 @@ export function Inspector({ onClose, plain }: { onClose?: () => void; plain?: bo
               );
             })}
           </ul>
-        </section>
+        </Section>
       </div>
     </aside>
   );

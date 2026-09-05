@@ -3,6 +3,7 @@ import { useCursor, Line, useTexture } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { componentById } from "@/data/components";
+import { assertMeshIdentity } from "@/lib/mesh-identity";
 import { useExplorer } from "@/store/explorer";
 import { photoViews, uvRectToLocal, type PhotoHit, type PhotoView } from "./photo-views";
 
@@ -43,15 +44,7 @@ function roundedRect(w: number, h: number, r: number, z: number): [number, numbe
   return pts;
 }
 
-function ReliefHit({
-  view,
-  hit,
-  map,
-}: {
-  view: PhotoView;
-  hit: PhotoHit;
-  map: THREE.Texture;
-}) {
+function ReliefHit({ view, hit, map }: { view: PhotoView; hit: PhotoHit; map: THREE.Texture }) {
   const selectedId = useExplorer((s) => s.selectedId);
   const hoveredId = useExplorer((s) => s.hoveredId);
   const select = useExplorer((s) => s.select);
@@ -64,15 +57,12 @@ function ReliefHit({
   useLayoutEffect(() => () => geo.dispose(), [geo]);
 
   const depth = hit.depth ?? 1;
-  const zBase = 0.012 + depth * 0.05;
+  const layer = hit.layer ?? 0;
+  const zBase = 0.008 + layer * 0.022 + depth * 0.005;
   const group = useRef<THREE.Group>(null);
   const zCur = useRef(0.004);
 
-  const outline = useMemo(
-    () => roundedRect(local.w, local.h, 0.018, 0.004),
-    [local.w, local.h],
-  );
-
+  const outline = useMemo(() => roundedRect(local.w, local.h, 0.018, 0.004), [local.w, local.h]);
   const show = selected || hovered;
 
   useFrame((_, delta) => {
@@ -100,13 +90,7 @@ function ReliefHit({
           select(hit.id);
         }}
       >
-        <meshBasicMaterial
-          map={map}
-          toneMapped={false}
-          transparent={!show}
-          opacity={show ? 1 : 0}
-          depthWrite={show}
-        />
+        <meshBasicMaterial map={map} toneMapped={false} transparent={!show} opacity={show ? 1 : 0} depthWrite={show} />
       </mesh>
       {show && (
         <>
@@ -219,12 +203,16 @@ export function PhotoEngine({ photoId }: { photoId: "welt" | "bay" }) {
   }, [map]);
 
   const hits = useMemo(() => {
-    return view.hits.filter((h) => {
-      const c = componentById[h.id];
-      if (!c) return false;
-      if (systemFilter !== "all" && c.system !== systemFilter) return false;
-      return true;
-    });
+    return view.hits
+      .filter((h) => {
+        const c = componentById[h.id];
+        if (!c) return false;
+        if (assertMeshIdentity(h.id).status === "unidentified") return false;
+        if (systemFilter !== "all" && c.system !== systemFilter) return false;
+        return true;
+      })
+      .slice()
+      .sort((a, b) => (a.layer ?? 0) - (b.layer ?? 0));
   }, [view, systemFilter]);
 
   return (

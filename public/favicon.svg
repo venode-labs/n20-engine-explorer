@@ -1,8 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Viscerra">
-  <rect width="32" height="32" rx="8" fill="#0b0c0e"/>
-  <rect x="5" y="7" width="4" height="14" rx="1.5" fill="#eceae4"/>
-  <rect x="11" y="7" width="4" height="14" rx="1.5" fill="#eceae4"/>
-  <rect x="17" y="7" width="4" height="14" rx="1.5" fill="#eceae4"/>
-  <rect x="23" y="7" width="4" height="14" rx="1.5" fill="#eceae4"/>
-  <rect x="6" y="21" width="20" height="4" rx="1.5" fill="#8aa0b4"/>
+  <rect width="32" height="32" rx="5" fill="#090a0c"/>
+  <path d="M6.5 7.5 14.2 24.5h3.6L25.5 7.5h-4.2L16 20.2 10.7 7.5Z" fill="#eceae4"/>
+  <path d="M16 20.2 21.3 7.5h4.2l-7.7 17h-1.8Z" fill="#9aadb8" opacity=".78"/>
 </svg>

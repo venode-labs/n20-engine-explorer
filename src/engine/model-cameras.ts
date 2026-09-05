@@ -13,13 +13,13 @@ function cam(target: [number, number, number], dist: number, azDeg: number, elDe
 }
 
 export const MODEL_PRESETS: Record<string, ModelCam> = {
-  hero: cam([0, 0.08, 0.02], 1.38, 34, 18),
+  hero: cam([0, 0.08, 0.02], 1.08, 34, 18),
   cover: cam([0, 0.34, 0], 0.72, 18, 58),
   ofh: cam([0.18, 0.15, 0.1], 0.58, 72, 22),
   intake: cam([0.16, 0.2, -0.02], 0.62, 92, 16),
   turbo: cam([-0.2, 0.09, 0], 0.58, -58, 16),
   front: cam([0.02, -0.02, 0.24], 0.72, 8, 10),
-  bay: cam([0, 0.08, 0.02], 1.38, 34, 18),
+  bay: cam([0, 0.08, 0.02], 1.08, 34, 18),
 };
 
 export const MODEL_FOCUS: Record<string, ModelCam> = {
@@ -35,7 +35,7 @@ export const MODEL_FOCUS: Record<string, ModelCam> = {
   "vanos-exhaust": cam([-0.04, 0.25, 0.25], 0.38, 10, 18),
   alternator: cam([0.18, 0.05, 0.23], 0.45, 40, 12),
   "electric-coolant-pump": cam([0.15, -0.02, 0.22], 0.42, 55, 8),
-  "map-thermostat": cam([0.13, 0.06, 0.2], 0.38, 60, 12),
+  "map-thermostat": cam([0.178, 0.11, 0.15], 0.38, 72, 14),
   "charge-pipe": cam([0.08, 0.08, 0.05], 0.7, 50, 12),
   "boost-pipe": cam([-0.12, 0.04, 0.18], 0.55, -20, 10),
   turbocharger: cam([-0.22, 0.09, 0], 0.52, -55, 16),

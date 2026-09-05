@@ -1,7 +1,10 @@
 import { useLayoutEffect, useRef, type ReactNode } from "react";
 import * as THREE from "three";
 import { useCursor } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
 import { componentById } from "@/data/components";
+import { assertMeshIdentity } from "@/lib/mesh-identity";
+import { EXPLODE } from "@/engine/explode";
 import { useExplorer } from "@/store/explorer";
 
 interface PartProps {
@@ -13,10 +16,12 @@ interface PartProps {
 
 export function Part({ id, children, position = [0, 0, 0], rotation = [0, 0, 0] }: PartProps) {
   const ref = useRef<THREE.Group>(null);
+  const explodeAmt = useRef(0);
   const selectedId = useExplorer((s) => s.selectedId);
   const hoveredId = useExplorer((s) => s.hoveredId);
   const visualMode = useExplorer((s) => s.visualMode);
   const mode = useExplorer((s) => s.materialMode);
+  const explode = useExplorer((s) => s.explode);
   const systemFilter = useExplorer((s) => s.systemFilter);
   const select = useExplorer((s) => s.select);
   const hover = useExplorer((s) => s.hover);
@@ -32,11 +37,22 @@ export function Part({ id, children, position = [0, 0, 0], rotation = [0, 0, 0] 
   useCursor(hovered && visible);
 
   let opacity = 1;
-  if (xray) opacity = selected ? 0.94 : 0.18;
+  if (xray) opacity = selected ? 0.96 : 0.27;
   else if (mode === "context") opacity = selected ? 1 : 0.28;
 
   const emissive = selected ? "#8aa0b4" : hovered ? "#4a5560" : "#000000";
   const emissiveIntensity = selected ? (xray ? 0.7 : 0.45) : hovered ? 0.2 : 0;
+  const offset = EXPLODE[id] ?? [0, 0, 0];
+  const explodeTarget = visualMode === "photo" ? 0 : explode;
+
+  useFrame((_, delta) => {
+    const g = ref.current;
+    if (!g) return;
+    const k = 1 - Math.exp(-10 * Math.min(delta, 0.1));
+    explodeAmt.current += (explodeTarget - explodeAmt.current) * k;
+    const t = explodeAmt.current;
+    g.position.set(position[0] + offset[0] * t, position[1] + offset[1] * t, position[2] + offset[2] * t);
+  });
 
   useLayoutEffect(() => {
     const g = ref.current;
@@ -80,15 +96,18 @@ export function Part({ id, children, position = [0, 0, 0], rotation = [0, 0, 0] 
       rotation={rotation}
       onPointerOver={(e) => {
         e.stopPropagation();
+        if (assertMeshIdentity(id).status === "unidentified") return;
         hover(id);
       }}
       onPointerOut={() => hover(null)}
       onClick={(e) => {
         e.stopPropagation();
+        if (assertMeshIdentity(id).status === "unidentified") return;
         select(id);
       }}
       onDoubleClick={(e) => {
         e.stopPropagation();
+        if (assertMeshIdentity(id).status === "unidentified") return;
         select(id);
       }}
     >

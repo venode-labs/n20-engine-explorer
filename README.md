@@ -1,34 +1,41 @@
 # Viscerra
 
-Photographic-first technical exhibit for exploring real engines and their systems. The current launch exhibit documents the BMW N20 fitted to a 2015 BMW 428i F32 (Australian market).
+Photographic-first technical exhibit for exploring real engines and their systems. The current launch exhibit documents the BMW N20B20 fitted to a 2015 BMW 428i F32 (Australian market).
 
-Not affiliated with BMW AG.
+Viscerra is independent and is not affiliated with BMW AG.
 
-## What it is
+## Visual contract
 
-Viscerra is built around a strict visual-truth rule: a real photograph is the primary reference. Schematic modes may explain the same layout, but they must never replace photographed hardware or invent missing detail.
+Photo mode is the source of visual truth. It uses licensed photographs of physical engines. 3D and X-ray are explicitly schematic reconstructions for layout and internal context; they are not OEM CAD, scans or substitutes for the photograph.
 
-The current N20 exhibit has three visual modes:
+The N20 exhibit provides:
 
-- **Photo** — licensed photographs of a real N20 (BMW Welt display and an F30 bay)
-- **3D** — schematic reconstruction of the documented layout that you can orbit
-- **X-ray** — the same schematic with translucent shells
+- **Photo** — BMW Welt display engine and F30 engine-bay source plates
+- **3D** — orbitable schematic reconstruction
+- **X-ray** — translucent schematic with the cover removed
+- verified part selection, subsystem filtering and known `connectsTo` relationships
+- VIN-dependent identification states where exact OE applicability is not verified
 
-Select parts, isolate systems, follow known connections, compare to the source photograph, and read verified technical notes. VIN-dependent items are explicitly labelled as requiring VIN verification.
+See `docs/viscerra-master-build-directive.md` for the release contract and `public/engine/photos/ATTRIBUTION.md` for image attribution.
 
-## Photographs
-
-See [public/engine/photos/ATTRIBUTION.md](public/engine/photos/ATTRIBUTION.md). The hero plate is CC BY-SA 3.0 (Hullie, BMW Welt, 2012).
-
-## Run locally
+## Run
 
 ```bash
 npm install
 npm run dev
 ```
 
-Production build:
+## Verification
 
 ```bash
+npm run release:gate
+npm run typecheck
+npm test
 npm run build
+```
+
+Browser visual audit:
+
+```bash
+npm run visual:audit
 ```
