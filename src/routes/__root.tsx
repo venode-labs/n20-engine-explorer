@@ -3,7 +3,7 @@ import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import appCss from "../styles.css?url";
 
-const APP_NAME = "N20 Engine Explorer";
+const APP_NAME = "Viscerra";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -14,7 +14,7 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "Interactive technical visualisation of the BMW N20 engine fitted to the Australian 2015 BMW 428i F32. Independent. Not affiliated with BMW AG.",
+          "Photographic-first interactive technical exhibit. This edition documents the BMW N20 fitted to the Australian 2015 BMW 428i F32. Independent. Not affiliated with BMW AG.",
       },
       { name: "theme-color", content: "#0b0c0e" },
     ],
