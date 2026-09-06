@@ -20,7 +20,7 @@ export function TechnicalView() {
         </p>
 
         <h2 className="mt-10 text-sm font-medium tracking-tight text-fg">Source photographs</h2>
-        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+        <div className="mt-3 grid items-start gap-4 sm:grid-cols-2">
           <figure className="overflow-hidden rounded-[6px] border border-border bg-surface">
             <img
               src="/engine/photos/n20-welt-full.jpg"
