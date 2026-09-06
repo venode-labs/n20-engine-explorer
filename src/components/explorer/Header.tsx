@@ -3,10 +3,10 @@ import { useExplorer } from "@/store/explorer";
 import { cn } from "@/lib/cn";
 
 const views = [
-  { id: "engine", label: "Engine" },
-  { id: "systems", label: "Systems" },
-  { id: "bay", label: "Bay" },
-  { id: "technical", label: "Notes" },
+  { id: "engine", label: "Engine", mobileLabel: "Engine" },
+  { id: "systems", label: "Systems", mobileLabel: "Sys" },
+  { id: "bay", label: "Bay", mobileLabel: "Bay" },
+  { id: "technical", label: "Notes", mobileLabel: "Notes" },
 ] as const;
 
 export function Header() {
@@ -16,9 +16,9 @@ export function Header() {
   const setHelpOpen = useExplorer((s) => s.setHelpOpen);
 
   return (
-    <header className="relative z-30 flex h-[52px] shrink-0 items-stretch border-b border-border bg-bg/95 px-3 pt-[env(safe-area-inset-top)] backdrop-blur-xl sm:px-4">
+    <header className="relative z-30 flex h-[52px] shrink-0 items-stretch border-b border-border bg-bg/96 px-2.5 pt-[env(safe-area-inset-top)] backdrop-blur-xl sm:px-4">
       <div className="flex min-w-0 shrink-0 items-center gap-2.5">
-        <p className="text-[13px] font-semibold tracking-[0.18em] text-fg">VISCERRA</p>
+        <p className="whitespace-nowrap text-[12px] font-semibold tracking-[0.16em] text-fg sm:text-[13px] sm:tracking-[0.18em]">VISCERRA</p>
         <span className="hidden h-4 w-px bg-border md:block" />
         <p className="hidden text-2xs tracking-[0.08em] text-subtle md:block">N20 / F32</p>
       </div>
@@ -31,14 +31,16 @@ export function Header() {
               type="button"
               onClick={() => setAppView(v.id)}
               className={cn(
-                "relative flex h-full min-w-12 items-center justify-center px-2 text-[11px] tracking-[0.06em] sm:min-w-14 sm:px-3",
+                "relative flex h-full min-w-10 items-center justify-center px-1.5 text-[10px] tracking-[0.045em] sm:min-w-14 sm:px-3 sm:text-[11px] sm:tracking-[0.06em]",
                 "text-muted transition-colors duration-150 hover:text-fg",
                 appView === v.id && "text-fg",
               )}
+              aria-label={v.label}
               aria-current={appView === v.id ? "page" : undefined}
             >
-              {v.label}
-              {appView === v.id ? <span className="absolute right-2 bottom-0 left-2 h-px bg-accent sm:right-3 sm:left-3" /> : null}
+              <span className="sm:hidden">{v.mobileLabel}</span>
+              <span className="hidden sm:inline">{v.label}</span>
+              {appView === v.id ? <span className="absolute right-1.5 bottom-0 left-1.5 h-px bg-accent sm:right-3 sm:left-3" /> : null}
             </button>
           ))}
         </div>
@@ -56,7 +58,7 @@ export function Header() {
         </button>
         <button
           type="button"
-          className="inline-flex h-10 items-center gap-1.5 px-2 text-[11px] tracking-[0.08em] text-fg hover:bg-elevated/70 sm:px-2.5"
+          className="inline-flex h-10 min-w-10 items-center justify-center gap-1.5 px-1.5 text-[11px] tracking-[0.08em] text-fg hover:bg-elevated/70 sm:px-2.5"
           onClick={() => setVinOpen(true)}
           aria-label="VIN"
         >
