@@ -4,7 +4,7 @@ import { componentById } from "@/data/components";
 import { sources, authorityLabel } from "@/data/sources";
 import { systemById } from "@/data/systems";
 import { meshIdentity } from "@/lib/mesh-identity";
-import { hitsForPart } from "@/engine/photo-views";
+import { hitsForPart, type PhotoId } from "@/engine/photo-views";
 import { useExplorer } from "@/store/explorer";
 import { cn } from "@/lib/cn";
 import { chipBtn, iconBtn, panelShell } from "./chrome";
@@ -24,7 +24,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export function Inspector({ onClose, plain }: { onClose?: () => void; plain?: boolean }) {
+export function Inspector({ onClose, plain, photoId }: { onClose?: () => void; plain?: boolean; photoId: PhotoId }) {
   const selectedId = useExplorer((s) => s.selectedId);
   const select = useExplorer((s) => s.select);
   const visualMode = useExplorer((s) => s.setVisualMode);
@@ -60,7 +60,7 @@ export function Inspector({ onClose, plain }: { onClose?: () => void; plain?: bo
 
   const sys = systemById[part.system];
   const confidenceTone = part.confidence === "verified" ? "ok" : part.confidence === "medium" ? "warn" : "accent";
-  const onPlate = hitsForPart(part.id).length > 0;
+  const onPlate = hitsForPart(part.id).some((hit) => hit.photo === photoId);
   const schematicOnly = !onPlate && !part.bayOnly;
 
   return (
@@ -210,8 +210,8 @@ export function Inspector({ onClose, plain }: { onClose?: () => void; plain?: bo
           {ident && <p className="text-2xs leading-relaxed text-subtle">{ident.basis}</p>}
           {!onPlate ? (
             <p className="text-2xs leading-relaxed text-warn">
-              Not marked on the current photographs — identified from ST1111 / service references, not from a visible
-              region in the capture set.
+              Not marked on this photograph — identified from ST1111 / service references, not from a visible
+              region in this plate.
             </p>
           ) : currentVisual === "photo" ? (
             <p className="text-2xs leading-relaxed text-subtle">
