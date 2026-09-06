@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Search } from "lucide-react";
-import { searchComponents } from "@/data/components";
+import { searchComponentsRich } from "@/data/search";
 import { systemById } from "@/data/systems";
 import { useExplorer } from "@/store/explorer";
 import { cn } from "@/lib/cn";
@@ -24,7 +24,7 @@ export function CommandPalette() {
     }
   }, [open, query]);
 
-  const list = useMemo(() => searchComponents(local).slice(0, 12), [local]);
+  const list = useMemo(() => searchComponentsRich(local).slice(0, 12), [local]);
 
   useEffect(() => {
     setActive(0);
@@ -33,7 +33,7 @@ export function CommandPalette() {
   if (!open) return null;
 
   const pick = (id: string) => {
-    const part = list.find((c) => c.id === id) ?? searchComponents(id)[0];
+    const part = list.find((c) => c.id === id) ?? searchComponentsRich(id)[0];
     select(id);
     setQuery(local);
     setAppView(part?.bayOnly ? "bay" : "engine");

@@ -24,6 +24,9 @@ const part = text('src/engine/cgi/Part.tsx');
 const explode = text('src/engine/explode.ts');
 const inspector = text('src/components/explorer/Inspector.tsx');
 const cameras = text('src/data/camera-presets.ts');
+const search = text('src/data/search.ts');
+const partsNav = text('src/components/explorer/PartsNav.tsx');
+const palette = text('src/components/explorer/CommandPalette.tsx');
 
 ok('package is Viscerra', pkg.name === 'viscerra');
 ok('browser title uses Viscerra', /APP_NAME\s*=\s*["']Viscerra["']/.test(root));
@@ -44,6 +47,9 @@ ok('explode offset map is populated', Object.keys(explode.match(/"?[a-z][a-z0-9-
 ok('unresolved inspector copy is honest', /Not marked on this photograph\. Open the 3D schematic\./.test(inspector));
 ok('inspector visibility is scoped to current photo', /hitsForPart\(part\.id\)\.some\(\(hit\) => hit\.photo === photoId\)/.test(inspector));
 ok('active photo is passed to inspector', (explorer.match(/<Inspector\s+photoId=\{photoId\}/g) ?? []).length >= 2);
+ok('symptom search indexes inspection and symptom text', /inspectionNotes/.test(search) && /commonSymptoms/.test(search));
+ok('catalogue uses symptom-aware search', /searchComponentsRich/.test(partsNav));
+ok('command palette uses symptom-aware search', /searchComponentsRich/.test(palette));
 ok('hero photo zoom is not regressed', /preset\(["']hero["'][\s\S]*?1\.(4[2-9]|[5-9]\d)/.test(cameras) || /preset\(["']hero["'][\s\S]*?,\s*(?:[2-9]|1\.[5-9])/.test(cameras));
 
 const weltSection = photos.split('const WELT_HITS')[1]?.split('const BAY_HITS')[0] ?? '';

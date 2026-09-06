@@ -1,5 +1,6 @@
 import { Search, X } from "lucide-react";
-import { components, searchComponents } from "@/data/components";
+import { components } from "@/data/components";
+import { searchComponentsRich } from "@/data/search";
 import { engineSystems, systemById } from "@/data/systems";
 import { useExplorer } from "@/store/explorer";
 import { cn } from "@/lib/cn";
@@ -15,7 +16,7 @@ export function PartsNav({ onPick, plain }: { onPick?: () => void; plain?: boole
   const appView = useExplorer((s) => s.appView);
   const searchId = plain ? "part-search-mobile" : "part-search";
 
-  const list = searchComponents(query).filter((c) => {
+  const list = searchComponentsRich(query).filter((c) => {
     if (c.bayOnly && appView !== "bay") return false;
     if (system !== "all" && c.system !== system) return false;
     return true;

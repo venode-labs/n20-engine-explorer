@@ -89,12 +89,21 @@ await capture('desktop-3d-default-1440x900', desktop, '/?mode=model');
 await capture('desktop-xray-default-1440x900', desktop, '/?mode=xray');
 await capture('desktop-3d-exploded-1440x900', desktop, '/?mode=model&explode=1');
 
-for (const q of ['turbo', 'oil filter', 'misfire']) {
+const expectedSearch = {
+  turbo: 'Twin-scroll turbocharger',
+  'oil filter': 'Oil-filter module',
+  misfire: 'Ignition coils',
+};
+for (const [q, expected] of Object.entries(expectedSearch)) {
   await capture(`desktop-search-${q.replace(/\s+/g, '-')}-1440x900`, desktop, '/', async page => {
     await page.keyboard.press('/');
     const input = page.getByPlaceholder(/Search parts, systems, symptoms/i).first();
     await input.fill(q);
     await page.waitForTimeout(250);
+    const palette = page.getByRole('dialog', { name: 'Search parts' });
+    const paletteText = await palette.innerText();
+    if (paletteText.includes('No match.')) throw new Error(`${q}: search returned No match`);
+    if (!paletteText.includes(expected)) throw new Error(`${q}: expected search result ${expected}`);
   });
 }
 
