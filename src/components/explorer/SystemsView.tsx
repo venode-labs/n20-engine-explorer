@@ -49,11 +49,14 @@ export function SystemsView() {
           Each path is limited to segments verified in BMW ST1111 or corroborating technical references. Unknown hose
           routes are omitted rather than invented. Selecting a node opens that component on the engine.
         </p>
-        <div className="mt-8 space-y-4">
+        <div className="mt-8 divide-y divide-border border-y border-border">
           {PATHS.map((path) => (
-            <section key={path.title} className="rounded-xl border border-border bg-surface p-4 sm:p-5">
-              <h2 className="text-sm font-medium tracking-tight text-fg">{path.title}</h2>
-              <p className="mt-1 text-xs text-subtle">{path.note}</p>
+            <section key={path.title} className="py-5">
+              <div className="flex items-baseline justify-between gap-4">
+                <h2 className="text-sm font-medium tracking-tight text-fg">{path.title}</h2>
+                <span className="hidden font-mono text-[9px] tabular-nums text-subtle sm:inline">{String(path.ids.length).padStart(2, "0")} nodes</span>
+              </div>
+              <p className="mt-1 max-w-2xl text-xs leading-relaxed text-subtle">{path.note}</p>
               <ol className="mt-4 flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center">
                 {path.ids.map((id, i) => {
                   const c = componentById[id];
@@ -70,9 +73,12 @@ export function SystemsView() {
                           if (!c.bayOnly) setAppView("engine");
                           else setAppView("bay");
                         }}
-                        className={`h-11 rounded-md px-3 text-left text-sm motion-safe:transition-colors motion-safe:duration-150 ${
-                          selected === id ? "bg-elevated text-fg" : "text-muted hover:bg-elevated/60 hover:text-fg"
+                        className={`min-h-11 border-l px-3 py-2 text-left text-sm motion-safe:transition-colors motion-safe:duration-150 ${
+                          selected === id
+                            ? "border-accent bg-elevated text-fg"
+                            : "border-border text-muted hover:border-border-strong hover:bg-elevated/60 hover:text-fg"
                         }`}
+                        aria-pressed={selected === id}
                       >
                         {c.canonicalName}
                         {c.diagramOnly || c.bayOnly ? (
