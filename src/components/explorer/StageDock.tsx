@@ -7,12 +7,9 @@ import { chipBtn, iconBtn } from "./chrome";
 const mobileLabel: Record<string, string> = {
   hero: "Hero",
   cover: "Cover",
-  oil: "Filter",
-  "oil-filter": "Filter",
+  ofh: "Filter",
   turbo: "Turbo",
-  "turbo-exhaust": "Turbo",
-  accessory: "Drive",
-  "accessory-drive": "Drive",
+  front: "Drive",
   bay: "Bay",
 };
 
