@@ -1,7 +1,5 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { List, PanelRight } from "lucide-react";
-import { useProgress } from "@react-three/drei";
-import { EngineCanvas } from "@/engine/EngineCanvas";
 import { photoViews } from "@/engine/photo-views";
 import { componentById } from "@/data/components";
 import { PART_FOCUS, presetById } from "@/data/camera-presets";
@@ -22,12 +20,14 @@ import { BottomSheet, SideSheet } from "./Sheet";
 import { iconBtn } from "./chrome";
 import { useHotkeys } from "./useHotkeys";
 
-function PlateLoader() {
-  const { active, progress } = useProgress();
-  if (!active) return null;
+const EngineCanvas = lazy(() =>
+  import("@/engine/EngineCanvas").then((module) => ({ default: module.EngineCanvas })),
+);
+
+function EngineStageLoader() {
   return (
-    <div className="absolute inset-0 z-10 flex items-center justify-center bg-bg">
-      <p className="kicker">Photographic plate {Math.round(progress)}%</p>
+    <div className="absolute inset-0 z-10 flex items-center justify-center bg-bg" role="status" aria-live="polite">
+      <p className="kicker">Loading interactive exhibit…</p>
     </div>
   );
 }
@@ -106,8 +106,9 @@ export function ExplorerApp() {
                   </figure>
                 )}
                 <div className="relative h-full min-h-0 overflow-hidden">
-                  <EngineCanvas photoId={photoId} />
-                  {!schematic && <PlateLoader />}
+                  <Suspense fallback={<EngineStageLoader />}>
+                    <EngineCanvas photoId={photoId} />
+                  </Suspense>
                   <div className="exhibit-vignette" />
                 </div>
               </div>
@@ -144,7 +145,7 @@ export function ExplorerApp() {
       <HelpOverlay />
       <SideSheet open={navOpen} onOpenChange={setNavOpen} title="Catalogue"><PartsNav plain onPick={() => setNavOpen(false)} /></SideSheet>
       <BottomSheet open={inspOpen} onOpenChange={setInspOpen} title={selected ? selected.canonicalName : "Inspector"}>
-        <div className="h-[min(70vh,32rem)]"><Inspector photoId={photoId} plain onClose={() => setInspOpen(false)} /></div>
+        <div className="h-[min(70vh,32rem)]"><Inspector photoId={photoId} plain /></div>
       </BottomSheet>
       <p className="sr-only">Independent photographic visualisation of a real BMW N20. Not affiliated with BMW AG.{selected ? ` Selected: ${selected.canonicalName}.` : ""}</p>
     </div>
