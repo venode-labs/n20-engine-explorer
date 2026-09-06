@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useExplorer } from "@/store/explorer";
 
-const KEY = "viscerra-hint-dismissed-v2";
+const KEY = "viscerra-hint-dismissed-v3";
 
 export function HintOverlay() {
   const [show, setShow] = useState(false);
@@ -14,7 +14,7 @@ export function HintOverlay() {
       /* ignore */
     }
     setShow(true);
-    const t = window.setTimeout(() => dismiss(), 6500);
+    const t = window.setTimeout(() => dismiss(), 4000);
     return () => window.clearTimeout(t);
   }, []);
 
@@ -31,14 +31,14 @@ export function HintOverlay() {
 
   const copy =
     visualMode === "photo"
-      ? "Drag to inspect · Tap a marked region · Pinch or scroll to zoom"
-      : "Drag to orbit · Tap a component · Pinch or scroll to zoom";
+      ? "Drag to inspect · Select a marked region · Photo is the source"
+      : "Drag to orbit · Select a component · Schematic view";
 
   return (
     <button
       type="button"
       onClick={dismiss}
-      className="pointer-events-auto max-w-[calc(100vw-2rem)] rounded-[4px] border border-border bg-surface/92 px-3 py-2 text-[11px] leading-snug tracking-[0.025em] text-muted shadow-hud backdrop-blur-md hover:text-fg sm:px-4 sm:text-xs"
+      className="pointer-events-auto hidden max-w-[calc(100vw-2rem)] rounded-[4px] border border-border bg-surface/92 px-3 py-1.5 text-xs leading-snug text-muted shadow-hud backdrop-blur-md hover:text-fg sm:block"
       aria-label={`${copy}. Dismiss hint.`}
     >
       {copy}
