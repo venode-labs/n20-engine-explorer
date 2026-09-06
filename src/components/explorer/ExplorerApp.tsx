@@ -121,7 +121,7 @@ export function ExplorerApp() {
             </div>
 
             <div className="pointer-events-auto absolute top-4 bottom-20 left-4 hidden w-60 lg:block"><PartsNav /></div>
-            {selected && <div className="pointer-events-auto absolute top-4 right-4 bottom-20 hidden w-80 lg:block"><Inspector /></div>}
+            {selected && <div className="pointer-events-auto absolute top-4 right-4 bottom-20 hidden w-80 lg:block"><Inspector photoId={photoId} /></div>}
 
             <div className="pointer-events-auto absolute top-3 left-3 flex gap-2 lg:hidden">
               <button type="button" className={`${iconBtn} hud-panel`} onClick={() => setNavOpen(true)} aria-label="Open parts"><List className="size-4" strokeWidth={1.75} /></button>
@@ -144,7 +144,7 @@ export function ExplorerApp() {
       <HelpOverlay />
       <SideSheet open={navOpen} onOpenChange={setNavOpen} title="Catalogue"><PartsNav plain onPick={() => setNavOpen(false)} /></SideSheet>
       <BottomSheet open={inspOpen} onOpenChange={setInspOpen} title={selected ? selected.canonicalName : "Inspector"}>
-        <div className="h-[min(70vh,32rem)]"><Inspector plain onClose={() => setInspOpen(false)} /></div>
+        <div className="h-[min(70vh,32rem)]"><Inspector photoId={photoId} plain onClose={() => setInspOpen(false)} /></div>
       </BottomSheet>
       <p className="sr-only">Independent photographic visualisation of a real BMW N20. Not affiliated with BMW AG.{selected ? ` Selected: ${selected.canonicalName}.` : ""}</p>
     </div>
