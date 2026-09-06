@@ -16,7 +16,8 @@ const WELT_HITS = [
   'serpentine-belt', 'ac-compressor', 'crank-pulley', 'electric-coolant-pump',
   'turbocharger', 'boost-pipe',
 ];
-const BAY_HITS = ['engine-cover', 'oil-cap', 'oil-filter-module', 'oil-cooler', 'charge-pipe', 'airbox'];
+const BAY_HITS = ['engine-cover', 'oil-cap', 'charge-pipe', 'airbox'];
+const UNRESOLVED_COPY = 'Not marked on this photograph. Open the 3D schematic.';
 
 async function capture(name, viewport, route = '/', action) {
   const page = await browser.newPage({ viewport });
@@ -65,6 +66,11 @@ async function capture(name, viewport, route = '/', action) {
   }
 }
 
+async function assertUnresolved(page) {
+  const body = await page.locator('body').innerText();
+  if (!body.includes(UNRESOLVED_COPY)) throw new Error(`Expected unresolved-photo copy: ${UNRESOLVED_COPY}`);
+}
+
 const desktop = { width: 1440, height: 900 };
 const mobile = { width: 390, height: 844 };
 
@@ -75,8 +81,10 @@ for (const id of WELT_HITS) {
 for (const id of BAY_HITS) {
   await capture(`desktop-bay-hit-${id}-1440x900`, desktop, `/?mode=photo&view=bay&part=${id}`);
 }
-await capture('desktop-unresolved-vanos-photo-1440x900', desktop, '/?mode=photo&view=engine&part=vanos-intake');
-await capture('desktop-unresolved-tensioner-photo-1440x900', desktop, '/?mode=photo&view=engine&part=belt-tensioner');
+await capture('desktop-unresolved-vanos-photo-1440x900', desktop, '/?mode=photo&view=engine&part=vanos-intake', assertUnresolved);
+await capture('desktop-unresolved-tensioner-photo-1440x900', desktop, '/?mode=photo&view=engine&part=belt-tensioner', assertUnresolved);
+await capture('desktop-bay-unresolved-oil-filter-module-1440x900', desktop, '/?mode=photo&view=bay&part=oil-filter-module', assertUnresolved);
+await capture('desktop-bay-unresolved-oil-cooler-1440x900', desktop, '/?mode=photo&view=bay&part=oil-cooler', assertUnresolved);
 await capture('desktop-3d-default-1440x900', desktop, '/?mode=model');
 await capture('desktop-xray-default-1440x900', desktop, '/?mode=xray');
 await capture('desktop-3d-exploded-1440x900', desktop, '/?mode=model&explode=1');

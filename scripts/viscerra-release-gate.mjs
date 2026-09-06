@@ -52,10 +52,21 @@ ok('bay charge pipe hit exists', /const BAY_HITS[\s\S]*?id:\s*["\']charge-pipe["
 const hitIds = (section) => [...section.matchAll(/id:\s*["\']([^"\']+)["\']/g)].map((m) => m[1]);
 const allowedWelt = ['engine-cover','oil-cap','oil-filter-module','oil-cooler','alternator','serpentine-belt','ac-compressor','crank-pulley','electric-coolant-pump','turbocharger','boost-pipe'];
 const baySection = photos.split('const BAY_HITS')[1]?.split('export const photoViews')[0] ?? '';
-const allowedBay = ['engine-cover','oil-cap','oil-filter-module','oil-cooler','charge-pipe','airbox'];
+const allowedBay = ['engine-cover','oil-cap','charge-pipe','airbox'];
+const forbiddenBay = ['oil-filter-module','oil-cooler'];
 const sameSet = (a, b) => a.length === b.length && [...a].sort().every((v, i) => v === [...b].sort()[i]);
 ok('Welt photo hit allowlist exact', sameSet(hitIds(weltSection), allowedWelt), `found ${hitIds(weltSection).join(', ')}`);
 ok('Bay photo hit allowlist exact', sameSet(hitIds(baySection), allowedBay), `found ${hitIds(baySection).join(', ')}`);
+for (const id of forbiddenBay) ok(`Bay has no screenshot-falsified hit: ${id}`, !baySection.includes(`id: "${id}"`) && !baySection.includes(`id: '${id}'`));
+
+const turbo = weltSection.match(/id:\s*["']turbocharger["'][\s\S]*?rect:\s*\{\s*u0:\s*([0-9.]+),\s*v0:\s*([0-9.]+),\s*u1:\s*([0-9.]+),\s*v1:\s*([0-9.]+)/);
+if (turbo) {
+  const [, u0, v0, u1, v1] = turbo.map(Number);
+  ok('Welt turbo hit remains precision-bounded', (u1 - u0) <= 0.21 && (v1 - v0) <= 0.21 && v0 >= 0.48, `rect ${u0},${v0} → ${u1},${v1}`);
+} else {
+  ok('Welt turbo hit remains precision-bounded', false, 'turbocharger rect missing');
+}
+
 ok('photo focus is derived only from calibrated hits', /\[photoViews\.bay, photoViews\.welt\][\s\S]*?view\.hits\.map/.test(cameras));
 ok('schematic click identity guard enabled', (part.match(/assertMeshIdentity\(id\)\.status === ["\']unidentified["\']/g) ?? []).length >= 3);
 

@@ -61,7 +61,8 @@ export function cameraFromUv(
  * Only hardware re-verified against per-hit crops is selectable here.
  */
 const WELT_HITS: PhotoHit[] = [
-  // VERIFIED 06/09/2026 against the 2489×2489 Hullie crop. Keep this list conservative.
+  // VERIFIED 06/09/2026 against the 2489×2489 Hullie crop and live Playwright captures.
+  // Keep this list conservative. The turbo region is intentionally bounded to the visible assembly envelope.
   { id: "engine-cover", rect: { u0: 0.0157, v0: 0.0165, u1: 0.6436, v1: 0.4134 }, layer: 0, depth: 1 },
   { id: "oil-cap", rect: { u0: 0.0346, v0: 0.1499, u1: 0.1551, v1: 0.2451 }, layer: 4, depth: 2 },
   { id: "oil-filter-module", rect: { u0: 0.6557, v0: 0.0611, u1: 0.8236, v1: 0.1450 }, layer: 3, depth: 1 },
@@ -71,7 +72,7 @@ const WELT_HITS: PhotoHit[] = [
   { id: "ac-compressor", rect: { u0: 0.7613, v0: 0.5163, u1: 0.9534, v1: 0.7336 }, layer: 2, depth: 3 },
   { id: "crank-pulley", rect: { u0: 0.4456, v0: 0.6613, u1: 0.7236, v1: 0.8734 }, layer: 3, depth: 3 },
   { id: "electric-coolant-pump", rect: { u0: 0.2857, v0: 0.7814, u1: 0.4737, v1: 0.9534 }, layer: 2, depth: 3 },
-  { id: "turbocharger", rect: { u0: 0.0346, v0: 0.4500, u1: 0.3005, v1: 0.7151 }, layer: 2, depth: 3 },
+  { id: "turbocharger", rect: { u0: 0.0150, v0: 0.4900, u1: 0.2050, v1: 0.6900 }, layer: 2, depth: 3 },
   { id: "boost-pipe", rect: { u0: 0.0960, v0: 0.6163, u1: 0.2037, v1: 0.7087 }, layer: 4, depth: 3 },
 ];
 
@@ -81,11 +82,10 @@ const WELT_HITS: PhotoHit[] = [
  * This reference plate is not represented as the Australian F32 itself.
  */
 const BAY_HITS: PhotoHit[] = [
-  // VERIFIED 06/09/2026 against the 2560×1706 F30 bay plate. No hidden/occluded hardware is marked.
+  // VERIFIED 06/09/2026 against the live 2560×1706 F30 bay screenshots.
+  // Oil-filter module and oil cooler were removed after screenshot review showed the prior UVs landed on cowl/loom.
   { id: "engine-cover", rect: { u0: 0.230, v0: 0.080, u1: 0.660, v1: 0.545 }, layer: 0, depth: 1 },
   { id: "oil-cap", rect: { u0: 0.238, v0: 0.355, u1: 0.302, v1: 0.455 }, layer: 4, depth: 2 },
-  { id: "oil-filter-module", rect: { u0: 0.505, v0: 0.345, u1: 0.607, v1: 0.465 }, layer: 3, depth: 2 },
-  { id: "oil-cooler", rect: { u0: 0.500, v0: 0.440, u1: 0.635, v1: 0.565 }, layer: 3, depth: 2 },
   { id: "charge-pipe", rect: { u0: 0.635, v0: 0.285, u1: 0.700, v1: 0.580 }, layer: 3, depth: 2 },
   { id: "airbox", rect: { u0: 0.185, v0: 0.570, u1: 0.785, v1: 0.845 }, layer: 1, depth: 2 },
 ];
