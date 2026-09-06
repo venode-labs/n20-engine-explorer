@@ -21,9 +21,7 @@ export function VinPanel() {
             inputRef.current?.focus();
           }}
         >
-          <Dialog.Title id="vin-title" className="text-sm font-medium text-fg">
-            Vehicle identification
-          </Dialog.Title>
+          <Dialog.Title className="text-sm font-medium text-fg">Vehicle identification</Dialog.Title>
           <Dialog.Description className="mt-2 text-sm leading-relaxed text-muted">
             Vehicle configuration: {vehicle.configurationLabel}
           </Dialog.Description>
