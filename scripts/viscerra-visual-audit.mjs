@@ -91,7 +91,7 @@ await capture('desktop-3d-exploded-1440x900', desktop, '/?mode=model&explode=1')
 
 const expectedSearch = {
   turbo: 'Twin-scroll turbocharger',
-  'oil filter': 'Oil-filter module',
+  'oil filter': 'Oil filter module',
   misfire: 'Ignition coils',
 };
 for (const [q, expected] of Object.entries(expectedSearch)) {
