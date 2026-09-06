@@ -116,6 +116,10 @@ async function assertMobileSheetHierarchy(page) {
   if (duplicateTitleCount !== 1) throw new Error(`Mobile inspector title rendered ${duplicateTitleCount} times inside the sheet`);
   const closeCount = await sheet.getByRole('button', { name: /Close/i }).count();
   if (closeCount !== 1) throw new Error(`Mobile inspector exposes ${closeCount} close controls inside the sheet`);
+  const focusInside = await sheet.evaluate((node) => node.contains(document.activeElement));
+  if (!focusInside) throw new Error('Mobile inspector sheet does not own focus');
+  const backgroundModeGroups = await page.getByRole('group', { name: 'Engine view' }).count();
+  if (backgroundModeGroups !== 0) throw new Error('Mobile inspector did not isolate background controls from the accessibility tree');
 }
 
 async function assertDialogFocus(page, dialogName) {
@@ -188,10 +192,7 @@ await capture('mobile-photo-default-390x844', mobile, '/', assertMobileModeSwitc
 await capture('mobile-catalogue-390x844', mobile, '/', async page => {
   await page.getByRole('button', { name: 'Open parts' }).click();
 });
-await capture('mobile-selected-turbo-390x844', mobile, '/?mode=photo&part=turbocharger', async page => {
-  await assertMobileModeSwitch(page);
-  await assertMobileSheetHierarchy(page);
-});
+await capture('mobile-selected-turbo-390x844', mobile, '/?mode=photo&part=turbocharger', assertMobileSheetHierarchy);
 await capture('mobile-3d-390x844', mobile, '/?mode=model', assertMobileModeSwitch);
 await capture('mobile-xray-390x844', mobile, '/?mode=xray', assertMobileModeSwitch);
 await capture('mobile-systems-390x844', mobile, '/', async page => {
