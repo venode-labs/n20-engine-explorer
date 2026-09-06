@@ -23,9 +23,7 @@ export function HelpOverlay() {
         <Dialog.Overlay className="fixed inset-0 z-50 bg-bg/78 backdrop-blur-[2px]" />
         <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-[6px] border border-border bg-surface p-5 shadow-hud outline-none">
           <p className="kicker">Shortcuts</p>
-          <Dialog.Title id="help-title" className="mt-1 text-base font-medium text-fg">
-            How to inspect
-          </Dialog.Title>
+          <Dialog.Title className="mt-1 text-base font-medium text-fg">How to inspect</Dialog.Title>
           <Dialog.Description className="mt-2 text-sm leading-relaxed text-muted">
             Drag to inspect or orbit. Pinch or scroll to zoom. Photo is the source view; 3D and X-ray are schematics.
           </Dialog.Description>
