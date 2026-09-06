@@ -27,6 +27,8 @@ const inspector = text('src/components/explorer/Inspector.tsx');
 const sheet = text('src/components/explorer/Sheet.tsx');
 const chrome = text('src/components/explorer/chrome.ts');
 const hint = text('src/components/explorer/HintOverlay.tsx');
+const systemsView = text('src/components/explorer/SystemsView.tsx');
+const technicalView = text('src/components/explorer/TechnicalView.tsx');
 const cameras = text('src/data/camera-presets.ts');
 const search = text('src/data/search.ts');
 const partsNav = text('src/components/explorer/PartsNav.tsx');
@@ -58,6 +60,9 @@ ok('mobile sheet has a single owned header surface', /data-ui=["']bottom-sheet["
 ok('mode labels are protected from wrapping', /whitespace-nowrap/.test(modes));
 ok('mobile touch targets are enlarged', /size-11[\s\S]*sm:size-10/.test(chrome) && /h-11[\s\S]*sm:h-8/.test(chrome));
 ok('interaction hint is task guidance, not debug copy', !/Photo is the real engine/.test(hint) && /Pinch or scroll to zoom/.test(hint));
+ok('systems view uses technical path layout rather than generic cards', /divide-y divide-border border-y/.test(systemsView) && !/rounded-xl border border-border bg-surface p-4/.test(systemsView));
+ok('technical notes disclose photo truth and schematic status consistently', /Photo mode remains the visual source of truth/.test(technicalView) && /3D and X-ray modes are schematic teaching views/.test(technicalView) && !/CGI reconstruction previously used as the primary engine was removed/.test(technicalView));
+ok('technical source images defer offscreen work', (technicalView.match(/loading=["']lazy["']/g) ?? []).length >= 2 && (technicalView.match(/decoding=["']async["']/g) ?? []).length >= 2);
 ok('symptom search indexes inspection and symptom text', /inspectionNotes/.test(search) && /commonSymptoms/.test(search));
 ok('catalogue uses symptom-aware search', /searchComponentsRich/.test(partsNav));
 ok('command palette uses symptom-aware search', /searchComponentsRich/.test(palette));
