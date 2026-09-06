@@ -20,7 +20,7 @@ export function ModeSwitch() {
           type="button"
           onClick={() => setVisual(v.id)}
           className={cn(
-            "inline-flex h-11 min-w-[4.25rem] items-center justify-center gap-1.5 whitespace-nowrap rounded-[3px] px-2.5 text-[12px] tracking-[0.035em] text-muted sm:h-8 sm:min-w-0 sm:px-3 sm:text-[11px] sm:tracking-[0.04em]",
+            "inline-flex h-11 min-w-[3.875rem] items-center justify-center gap-1 whitespace-nowrap rounded-[3px] px-2 text-[12px] tracking-[0.025em] text-muted sm:h-8 sm:min-w-0 sm:gap-1.5 sm:px-3 sm:text-[11px] sm:tracking-[0.04em]",
             "transition-[color,background-color,box-shadow] duration-150 hover:text-fg",
             visual === v.id && "bg-elevated text-fg shadow-[inset_0_0_0_1px_rgb(255_255_255_/_0.04)]",
           )}
