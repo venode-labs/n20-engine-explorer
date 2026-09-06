@@ -19,6 +19,17 @@ const WELT_HITS = [
 const BAY_HITS = ['engine-cover', 'oil-cap', 'charge-pipe', 'airbox'];
 const UNRESOLVED_COPY = 'Not marked on this photograph. Open the 3D schematic.';
 
+async function assertFirstPartyShell(page) {
+  const residue = await page.locator('script[src*="grok.com"], link[href*="/__grok/"]').count();
+  if (residue !== 0) throw new Error(`Builder residue found in production document: ${residue} injected node(s)`);
+  const manifest = await page.locator('link[rel="manifest"]').getAttribute('href');
+  if (manifest !== '/manifest.webmanifest') throw new Error(`Unexpected manifest href: ${manifest}`);
+  const ogType = await page.locator('meta[property="og:type"]').getAttribute('content');
+  if (ogType !== 'website') throw new Error(`Unexpected og:type: ${ogType}`);
+  const ogImage = await page.locator('meta[property="og:image"]').getAttribute('content');
+  if (ogImage !== '/og.jpg') throw new Error(`Unexpected og:image: ${ogImage}`);
+}
+
 async function capture(name, viewport, route = '/', action) {
   const page = await browser.newPage({ viewport });
   const errors = [];
@@ -26,7 +37,9 @@ async function capture(name, viewport, route = '/', action) {
   page.on('pageerror', e => errors.push(e.message));
   try {
     await page.goto(`${baseURL}${route}`, { waitUntil: 'networkidle', timeout: 60_000 });
-    await page.locator('canvas').waitFor({ state: 'visible', timeout: 30_000 });
+    await assertFirstPartyShell(page);
+    const canvas = page.locator('canvas');
+    await canvas.waitFor({ state: 'visible', timeout: 30_000 });
     await page.waitForTimeout(900);
     if (action) await action(page);
     await page.waitForTimeout(500);
@@ -42,9 +55,9 @@ async function capture(name, viewport, route = '/', action) {
     if (layout.scrollWidth > layout.width + 1) throw new Error(`${name}: horizontal overflow ${layout.scrollWidth} > ${layout.width}`);
     if (errors.length) throw new Error(`${name}: browser errors: ${errors.join(' | ')}`);
 
-    const canvas = page.locator('canvas');
-    const box = await canvas.boundingBox();
-    if (!box || box.width < viewport.width * 0.55 || box.height < viewport.height * 0.55) {
+    const canvasVisible = await canvas.isVisible().catch(() => false);
+    const box = canvasVisible ? await canvas.boundingBox() : null;
+    if (canvasVisible && (!box || box.width < viewport.width * 0.55 || box.height < viewport.height * 0.55)) {
       throw new Error(`${name}: canvas too small ${JSON.stringify(box)}`);
     }
 
@@ -105,6 +118,13 @@ async function assertMobileSheetHierarchy(page) {
   if (closeCount !== 1) throw new Error(`Mobile inspector exposes ${closeCount} close controls inside the sheet`);
 }
 
+async function assertDialogFocus(page, dialogName) {
+  const dialog = page.getByRole('dialog', { name: dialogName });
+  await dialog.waitFor({ state: 'visible' });
+  const focusInside = await dialog.evaluate((node) => node.contains(document.activeElement));
+  if (!focusInside) throw new Error(`${dialogName}: focus escaped modal content`);
+}
+
 const desktop = { width: 1440, height: 900 };
 const mobile = { width: 390, height: 844 };
 const narrow = { width: 320, height: 720 };
@@ -123,6 +143,24 @@ await capture('desktop-bay-unresolved-oil-cooler-1440x900', desktop, '/?mode=pho
 await capture('desktop-3d-default-1440x900', desktop, '/?mode=model');
 await capture('desktop-xray-default-1440x900', desktop, '/?mode=xray');
 await capture('desktop-3d-exploded-1440x900', desktop, '/?mode=model&explode=1');
+await capture('desktop-systems-1440x900', desktop, '/', async page => {
+  await page.getByRole('button', { name: 'Systems', exact: true }).click();
+  await page.getByRole('heading', { name: 'How the N20 is put together' }).waitFor();
+});
+await capture('desktop-notes-1440x900', desktop, '/', async page => {
+  await page.getByRole('button', { name: 'Notes', exact: true }).click();
+  await page.getByRole('heading', { name: /2015 BMW 428i F32/i }).waitFor();
+});
+await capture('desktop-vin-dialog-1440x900', desktop, '/', async page => {
+  await page.getByRole('button', { name: 'VIN', exact: true }).click();
+  await assertDialogFocus(page, 'Vehicle identification');
+  const copy = await page.getByRole('dialog', { name: 'Vehicle identification' }).innerText();
+  if (copy.toLowerCase().includes('prototype')) throw new Error('VIN dialog still exposes prototype copy');
+});
+await capture('desktop-help-dialog-1440x900', desktop, '/', async page => {
+  await page.getByRole('button', { name: 'Keyboard shortcuts' }).click();
+  await assertDialogFocus(page, 'How to inspect');
+});
 
 const expectedSearch = {
   turbo: 'Twin-scroll turbocharger',
@@ -132,13 +170,17 @@ const expectedSearch = {
 for (const [q, expected] of Object.entries(expectedSearch)) {
   await capture(`desktop-search-${q.replace(/\s+/g, '-')}-1440x900`, desktop, '/', async page => {
     await page.keyboard.press('/');
+    const palette = page.getByRole('dialog', { name: 'Search parts' });
+    await assertDialogFocus(page, 'Search parts');
     const input = page.getByPlaceholder(/Search parts, systems, symptoms/i).first();
+    if (!(await input.evaluate((node) => node === document.activeElement))) throw new Error(`${q}: search input did not receive focus`);
     await input.fill(q);
     await page.waitForTimeout(250);
-    const palette = page.getByRole('dialog', { name: 'Search parts' });
     const paletteText = await palette.innerText();
     if (paletteText.includes('No match.')) throw new Error(`${q}: search returned No match`);
     if (!paletteText.includes(expected)) throw new Error(`${q}: expected search result ${expected}`);
+    await page.keyboard.press('Tab');
+    await assertDialogFocus(page, 'Search parts');
   });
 }
 
@@ -152,6 +194,14 @@ await capture('mobile-selected-turbo-390x844', mobile, '/?mode=photo&part=turboc
 });
 await capture('mobile-3d-390x844', mobile, '/?mode=model', assertMobileModeSwitch);
 await capture('mobile-xray-390x844', mobile, '/?mode=xray', assertMobileModeSwitch);
+await capture('mobile-systems-390x844', mobile, '/', async page => {
+  await page.getByRole('button', { name: 'Systems', exact: true }).click();
+  await page.getByRole('heading', { name: 'How the N20 is put together' }).waitFor();
+});
+await capture('mobile-notes-390x844', mobile, '/', async page => {
+  await page.getByRole('button', { name: 'Notes', exact: true }).click();
+  await page.getByRole('heading', { name: /2015 BMW 428i F32/i }).waitFor();
+});
 await capture('mobile-narrow-320x720', narrow, '/', async page => {
   await assertMobileModeSwitch(page);
   await assertNarrowHeader(page);
