@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const KEY = "viscerra-hint-dismissed-v1";
+const KEY = "viscerra-hint-dismissed-v2";
 
 export function HintOverlay() {
   const [show, setShow] = useState(false);
@@ -12,7 +12,7 @@ export function HintOverlay() {
       /* ignore */
     }
     setShow(true);
-    const t = window.setTimeout(() => dismiss(), 7000);
+    const t = window.setTimeout(() => dismiss(), 4000);
     return () => window.clearTimeout(t);
   }, []);
 
@@ -31,9 +31,10 @@ export function HintOverlay() {
     <button
       type="button"
       onClick={dismiss}
-      className="pointer-events-auto rounded-[4px] border border-border bg-surface/90 px-4 py-2 text-xs tracking-wide text-muted shadow-hud backdrop-blur-md hover:text-fg"
+      className="pointer-events-auto hidden rounded-[4px] border border-border bg-surface/92 px-3 py-1.5 text-xs text-muted shadow-hud backdrop-blur-md hover:text-fg sm:block"
+      aria-label="Dismiss interaction hint"
     >
-      Drag to look · Click a part · Photo is the real engine
+      Drag to inspect · select a part · Photo is the source
     </button>
   );
 }
