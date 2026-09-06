@@ -31,8 +31,8 @@ export function HintOverlay() {
 
   const copy =
     visualMode === "photo"
-      ? "Drag to inspect · Select a marked region · Photo is the source"
-      : "Drag to orbit · Select a component · Schematic view";
+      ? "Drag to inspect · Select a marked region · Pinch or scroll to zoom · Photo is the source"
+      : "Drag to orbit · Select a component · Pinch or scroll to zoom · Schematic view";
 
   return (
     <button
