@@ -71,8 +71,43 @@ async function assertUnresolved(page) {
   if (!body.includes(UNRESOLVED_COPY)) throw new Error(`Expected unresolved-photo copy: ${UNRESOLVED_COPY}`);
 }
 
+async function assertMobileModeSwitch(page) {
+  const group = page.getByRole('group', { name: 'Engine view' });
+  const buttons = group.getByRole('button');
+  const count = await buttons.count();
+  if (count !== 3) throw new Error(`Expected 3 visual mode buttons, found ${count}`);
+  for (let i = 0; i < count; i += 1) {
+    const box = await buttons.nth(i).boundingBox();
+    if (!box || box.height < 40) throw new Error(`Mode button ${i} touch target too small: ${JSON.stringify(box)}`);
+  }
+  const xray = group.getByRole('button', { name: /X-ray:/i });
+  const rectCount = await xray.locator('span').evaluate((el) => el.getClientRects().length);
+  if (rectCount !== 1) throw new Error(`X-ray label wrapped to ${rectCount} lines`);
+}
+
+async function assertNarrowHeader(page) {
+  const expected = ['Engine', 'Systems', 'Bay', 'Notes'];
+  for (const label of expected) {
+    const button = page.getByRole('button', { name: label, exact: true }).first();
+    const box = await button.boundingBox();
+    if (!box || box.x < -0.5 || box.x + box.width > 320.5) {
+      throw new Error(`${label}: primary nav is not visible at 320px: ${JSON.stringify(box)}`);
+    }
+  }
+}
+
+async function assertMobileSheetHierarchy(page) {
+  const sheet = page.locator('[data-ui="bottom-sheet"]');
+  await sheet.waitFor({ state: 'visible' });
+  const duplicateTitleCount = await sheet.getByText('Twin-scroll turbocharger', { exact: true }).count();
+  if (duplicateTitleCount !== 1) throw new Error(`Mobile inspector title rendered ${duplicateTitleCount} times inside the sheet`);
+  const closeCount = await sheet.getByRole('button', { name: /Close/i }).count();
+  if (closeCount !== 1) throw new Error(`Mobile inspector exposes ${closeCount} close controls inside the sheet`);
+}
+
 const desktop = { width: 1440, height: 900 };
 const mobile = { width: 390, height: 844 };
+const narrow = { width: 320, height: 720 };
 
 await capture('desktop-photo-default-1440x900', desktop);
 for (const id of WELT_HITS) {
@@ -107,13 +142,22 @@ for (const [q, expected] of Object.entries(expectedSearch)) {
   });
 }
 
-await capture('mobile-photo-default-390x844', mobile);
+await capture('mobile-photo-default-390x844', mobile, '/', assertMobileModeSwitch);
 await capture('mobile-catalogue-390x844', mobile, '/', async page => {
   await page.getByRole('button', { name: 'Open parts' }).click();
 });
-await capture('mobile-selected-turbo-390x844', mobile, '/?mode=photo&part=turbocharger');
-await capture('mobile-3d-390x844', mobile, '/?mode=model');
-await capture('mobile-xray-390x844', mobile, '/?mode=xray');
+await capture('mobile-selected-turbo-390x844', mobile, '/?mode=photo&part=turbocharger', async page => {
+  await assertMobileModeSwitch(page);
+  await assertMobileSheetHierarchy(page);
+});
+await capture('mobile-3d-390x844', mobile, '/?mode=model', assertMobileModeSwitch);
+await capture('mobile-xray-390x844', mobile, '/?mode=xray', assertMobileModeSwitch);
+await capture('mobile-narrow-320x720', narrow, '/', async page => {
+  await assertMobileModeSwitch(page);
+  await assertNarrowHeader(page);
+  if (!(await page.getByText('Isolate', { exact: true }).isVisible())) throw new Error('Isolate label is not visible on narrow mobile');
+  if (!(await page.getByText('Compare', { exact: true }).isVisible())) throw new Error('Compare label is not visible on narrow mobile');
+});
 
 writeFileSync(path.join(out, 'verdicts.json'), JSON.stringify(verdicts, null, 2));
 await browser.close();
