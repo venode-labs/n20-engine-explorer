@@ -24,7 +24,11 @@ export const Route = createRootRoute({
         content: "Photographic-first interactive engine anatomy exhibit with explicit 3D and X-ray schematic views.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: "/og.jpg" },
+      { property: "og:image:alt", content: "Viscerra interactive engine anatomy exhibit" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: APP_NAME },
+      { name: "twitter:image", content: "/og.jpg" },
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
