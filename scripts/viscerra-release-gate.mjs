@@ -27,6 +27,10 @@ const cameras = text('src/data/camera-presets.ts');
 const search = text('src/data/search.ts');
 const partsNav = text('src/components/explorer/PartsNav.tsx');
 const palette = text('src/components/explorer/CommandPalette.tsx');
+const dock = text('src/components/explorer/StageDock.tsx');
+const hint = text('src/components/explorer/HintOverlay.tsx');
+const styles = text('src/styles.css');
+const vite = text('vite.config.ts');
 
 ok('package is Viscerra', pkg.name === 'viscerra');
 ok('browser title uses Viscerra', /APP_NAME\s*=\s*["']Viscerra["']/.test(root));
@@ -51,6 +55,16 @@ ok('symptom search indexes inspection and symptom text', /inspectionNotes/.test(
 ok('catalogue uses symptom-aware search', /searchComponentsRich/.test(partsNav));
 ok('command palette uses symptom-aware search', /searchComponentsRich/.test(palette));
 ok('hero photo zoom is not regressed', /preset\(["']hero["'][\s\S]*?1\.(4[2-9]|[5-9]\d)/.test(cameras) || /preset\(["']hero["'][\s\S]*?,\s*(?:[2-9]|1\.[5-9])/.test(cameras));
+
+// Production polish invariants added after the critical UI audit.
+ok('no Grok PWA plugin in production build config', !/grokPwaPlugin/.test(vite));
+ok('no Grok manifest or icon links in root head', !/__grok\//.test(root));
+ok('no preview host bridge mounted in production root', !/PreviewHostBridge/.test(root));
+ok('mode copy marks schematic views as non-photorealistic', /not photorealistic/i.test(modes));
+ok('mobile camera presets have compact labels', /mobileLabel/.test(dock) && /ofh:\s*["']Filter["']/.test(dock) && /front:\s*["']Drive["']/.test(dock));
+ok('onboarding hint is hidden on mobile', /hidden[\s\S]*sm:block/.test(hint));
+ok('catalogue search wording remains symptom-aware', /Part or symptom/.test(partsNav));
+ok('UI contrast floor raised', /--color-subtle:\s*#7d8188/.test(styles) && /--text-2xs:\s*0\.75rem/.test(styles));
 
 const weltSection = photos.split('const WELT_HITS')[1]?.split('const BAY_HITS')[0] ?? '';
 const forbiddenWelt = ['vanos-intake','vanos-exhaust','belt-tensioner','cylinder-head','ignition-coils','hpfp','valve-cover','charge-pipe'];
