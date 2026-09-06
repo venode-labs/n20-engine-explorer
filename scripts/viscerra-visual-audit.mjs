@@ -18,6 +18,7 @@ const WELT_HITS = [
 ];
 const BAY_HITS = ['engine-cover', 'oil-cap', 'charge-pipe', 'airbox'];
 const UNRESOLVED_COPY = 'Not marked on this photograph. Open the 3D schematic.';
+const MODE_GROUP = 'Engine visual mode';
 
 async function assertFirstPartyShell(page) {
   const residue = await page.locator('script[src*="grok.com"], link[href*="/__grok/"]').count();
@@ -73,6 +74,7 @@ async function capture(name, viewport, route = '/', action) {
     verdicts.push({ name, status: 'pass', ...layout, canvas: box });
   } catch (error) {
     verdicts.push({ name, status: 'fail', error: String(error) });
+    writeFileSync(path.join(out, 'verdicts.json'), JSON.stringify(verdicts, null, 2));
     throw error;
   } finally {
     await page.close();
@@ -85,7 +87,7 @@ async function assertUnresolved(page) {
 }
 
 async function assertMobileModeSwitch(page) {
-  const group = page.getByRole('group', { name: 'Engine view' });
+  const group = page.getByRole('group', { name: MODE_GROUP });
   const buttons = group.getByRole('button');
   const count = await buttons.count();
   if (count !== 3) throw new Error(`Expected 3 visual mode buttons, found ${count}`);
@@ -109,6 +111,21 @@ async function assertNarrowHeader(page) {
   }
 }
 
+async function assertNarrowStageControls(page) {
+  const expected = [
+    'Isolate selected component',
+    'Compare to source photograph',
+    'Reset view',
+  ];
+  for (const label of expected) {
+    const button = page.getByRole('button', { name: label, exact: true });
+    const box = await button.boundingBox();
+    if (!box) throw new Error(`${label}: control missing at 320px`);
+    if (box.height < 40 || box.width < 40) throw new Error(`${label}: touch target too small at 320px: ${JSON.stringify(box)}`);
+    if (box.x < -0.5 || box.x + box.width > 320.5) throw new Error(`${label}: control is clipped at 320px: ${JSON.stringify(box)}`);
+  }
+}
+
 async function assertMobileSheetHierarchy(page) {
   const sheet = page.locator('[data-ui="bottom-sheet"]');
   await sheet.waitFor({ state: 'visible' });
@@ -118,7 +135,7 @@ async function assertMobileSheetHierarchy(page) {
   if (closeCount !== 1) throw new Error(`Mobile inspector exposes ${closeCount} close controls inside the sheet`);
   const focusInside = await sheet.evaluate((node) => node.contains(document.activeElement));
   if (!focusInside) throw new Error('Mobile inspector sheet does not own focus');
-  const backgroundModeGroups = await page.getByRole('group', { name: 'Engine view' }).count();
+  const backgroundModeGroups = await page.getByRole('group', { name: MODE_GROUP }).count();
   if (backgroundModeGroups !== 0) throw new Error('Mobile inspector did not isolate background controls from the accessibility tree');
 }
 
@@ -206,8 +223,7 @@ await capture('mobile-notes-390x844', mobile, '/', async page => {
 await capture('mobile-narrow-320x720', narrow, '/', async page => {
   await assertMobileModeSwitch(page);
   await assertNarrowHeader(page);
-  if (!(await page.getByText('Isolate', { exact: true }).isVisible())) throw new Error('Isolate label is not visible on narrow mobile');
-  if (!(await page.getByText('Compare', { exact: true }).isVisible())) throw new Error('Compare label is not visible on narrow mobile');
+  await assertNarrowStageControls(page);
 });
 
 writeFileSync(path.join(out, 'verdicts.json'), JSON.stringify(verdicts, null, 2));
