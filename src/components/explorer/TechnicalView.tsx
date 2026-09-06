@@ -14,33 +14,37 @@ export function TechnicalView() {
           2015 BMW 428i F32 — Australian N20
         </h1>
         <p className="mt-4 text-sm leading-relaxed text-pretty text-muted">
-          Independent technical visualisation. Not affiliated with BMW AG. The engine you see is a photograph of a
-          physical BMW N20, not a modelled or rendered reconstruction. Component data is from BMW service-training
-          material. This is not a substitute for TIS / ISTA procedures.
+          Independent technical visualisation. Not affiliated with BMW AG. Photo mode is grounded in photographs of
+          physical N20 engines; 3D and X-ray are explicitly schematic reconstructions for orientation. Component data
+          is from BMW service-training material. This is not a substitute for TIS / ISTA procedures.
         </p>
 
         <h2 className="mt-10 text-sm font-medium tracking-tight text-fg">Source photographs</h2>
         <div className="mt-3 grid gap-4 sm:grid-cols-2">
-          <figure className="overflow-hidden rounded-xl border border-border bg-surface">
+          <figure className="overflow-hidden rounded-[6px] border border-border bg-surface">
             <img
               src="/engine/photos/n20-welt-full.jpg"
               alt="Physical BMW N20 engine on a stand at BMW Welt, Munich, April 2012."
               className="w-full outline outline-1 -outline-offset-1 outline-white/10"
               width={1365}
               height={2048}
+              loading="lazy"
+              decoding="async"
             />
             <figcaption className="px-3 py-2 text-2xs leading-relaxed text-muted">
               Hullie (AHHM van Hulten), BMW N20 Engine, BMW Welt, 30 April 2012. Wikimedia Commons, CC BY-SA 3.0.
               Isolated display engine — primary photographic plate.
             </figcaption>
           </figure>
-          <figure className="overflow-hidden rounded-xl border border-border bg-surface">
+          <figure className="overflow-hidden rounded-[6px] border border-border bg-surface">
             <img
               src="/engine/photos/f30-bay.jpg"
               alt="BMW 328i F30 2012 engine bay, showing an N20 with acoustic cover, airbox on vehicle-left, and charge plumbing across the front."
               className="w-full outline outline-1 -outline-offset-1 outline-white/10"
               width={2560}
               height={1706}
+              loading="lazy"
+              decoding="async"
             />
             <figcaption className="px-3 py-2 text-2xs leading-relaxed text-muted">
               HLW, BMW 328i F30 2012 Motorraum. Wikimedia Commons, CC BY-SA 3.0. LHD F30; in-bay plate. A 2012 car may
@@ -78,20 +82,22 @@ export function TechnicalView() {
           ))}
         </ul>
 
-        <h2 className="mt-10 text-sm font-medium tracking-tight text-fg">Model status</h2>
+        <h2 className="mt-10 text-sm font-medium tracking-tight text-fg">Visualisation status</h2>
         <p className="mt-2 text-sm leading-relaxed text-muted">
-          The CGI reconstruction previously used as the primary engine was removed from the production scene (archived
-          as rejected). The live visual is a photographic plate of a real N20: unlit, unretouched albedo from the source
-          JPEG. Invisible hit regions sit in front of the plate for picking. Dense photogrammetry was not possible — the
-          licensed set is two photographs of two different physical engines, not an overlapping capture of one object.
+          Photo mode remains the visual source of truth. It uses the licensed source JPEGs as photographic plates with
+          calibrated invisible hit regions for picking; the photograph itself is not replaced by modelled geometry. The
+          separate 3D and X-ray modes are schematic teaching views. They are intentionally not presented as a
+          photogrammetric or dimensionally validated scan. Dense photogrammetry is not supportable from this source set:
+          the licensed material contains two photographs of different physical engines rather than overlapping captures
+          of one object.
         </p>
-        <div className="mt-4 overflow-x-auto rounded-xl border border-border">
+        <div className="mt-4 overflow-x-auto border border-border">
           <table className="w-full min-w-[40rem] text-left text-xs">
             <thead className="text-2xs uppercase tracking-wide text-subtle">
               <tr>
                 <th className="border-b border-border px-3 py-2 pr-3">Feature</th>
-                <th className="border-b border-border px-3 py-2 pr-3">Mesh</th>
-                <th className="border-b border-border px-3 py-2">Confidence</th>
+                <th className="border-b border-border px-3 py-2 pr-3">Identity</th>
+                <th className="border-b border-border px-3 py-2">Basis</th>
               </tr>
             </thead>
             <tbody>
@@ -128,8 +134,8 @@ export function TechnicalView() {
                 {s.url ? (
                   <>
                     {" · "}
-                    <a href={s.url} className="hover:text-fg" target="_blank" rel="noreferrer">
-                      {s.url}
+                    <a href={s.url} className="break-all underline-offset-2 hover:text-fg hover:underline" target="_blank" rel="noreferrer">
+                      source link
                     </a>
                   </>
                 ) : null}
