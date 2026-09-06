@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls, useTexture } from "@react-three/drei";
+import { ContactShadows, OrbitControls, useTexture } from "@react-three/drei";
 import * as THREE from "three";
 import { cameraPresets, PART_FOCUS, presetById } from "@/data/camera-presets";
 import { useExplorer } from "@/store/explorer";
@@ -118,23 +118,23 @@ function PhotoScene({ photoId }: { photoId: "welt" | "bay" }) {
 function makeStudioEnv(gl: THREE.WebGLRenderer) {
   const pmrem = new THREE.PMREMGenerator(gl);
   const sc = new THREE.Scene();
-  sc.add(new THREE.HemisphereLight("#f3f6fa", "#2c2a26", 1.35));
-  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshBasicMaterial({ color: "#f4f6f8" }));
+  sc.add(new THREE.HemisphereLight("#dce5ec", "#15181d", 1.05));
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshBasicMaterial({ color: "#dfe4e7" }));
   ceil.rotation.x = Math.PI / 2;
   ceil.position.y = 3.2;
   sc.add(ceil);
-  const wall = new THREE.Mesh(new THREE.PlaneGeometry(10, 6), new THREE.MeshBasicMaterial({ color: "#dbe3ec" }));
+  const wall = new THREE.Mesh(new THREE.PlaneGeometry(10, 6), new THREE.MeshBasicMaterial({ color: "#aeb9c2" }));
   wall.position.z = -4;
   sc.add(wall);
-  const warm = new THREE.Mesh(new THREE.PlaneGeometry(10, 6), new THREE.MeshBasicMaterial({ color: "#e7d7c2" }));
+  const warm = new THREE.Mesh(new THREE.PlaneGeometry(10, 6), new THREE.MeshBasicMaterial({ color: "#b5aa9e" }));
   warm.rotation.y = -Math.PI / 2;
   warm.position.x = 4;
   sc.add(warm);
-  const cool = new THREE.Mesh(new THREE.PlaneGeometry(10, 6), new THREE.MeshBasicMaterial({ color: "#cfd8e4" }));
+  const cool = new THREE.Mesh(new THREE.PlaneGeometry(10, 6), new THREE.MeshBasicMaterial({ color: "#9faeb9" }));
   cool.rotation.y = Math.PI / 2;
   cool.position.x = -4;
   sc.add(cool);
-  const tex = pmrem.fromScene(sc, 0.04).texture;
+  const tex = pmrem.fromScene(sc, 0.06).texture;
   sc.traverse((obj) => {
     const mesh = obj as THREE.Mesh;
     if (mesh.geometry) mesh.geometry.dispose();
@@ -155,7 +155,7 @@ function StudioEnv() {
       tex = env.tex;
       pmrem = env.pmrem;
       scene.environment = tex;
-      scene.environmentIntensity = 1.35;
+      scene.environmentIntensity = 0.92;
     } catch {
       scene.environment = null;
     }
@@ -172,12 +172,16 @@ function ModelGround() {
   return (
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.28, 0]} raycast={() => undefined}>
-        <circleGeometry args={[2.1, 64]} />
-        <meshStandardMaterial color="#16181c" metalness={0} roughness={1} />
+        <circleGeometry args={[2.25, 64]} />
+        <meshStandardMaterial color="#0d1014" metalness={0} roughness={0.98} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.279, 0]} raycast={() => undefined}>
-        <ringGeometry args={[0.62, 0.635, 80]} />
-        <meshBasicMaterial color="#4a5560" />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.278, 0]} raycast={() => undefined}>
+        <ringGeometry args={[0.62, 0.628, 96]} />
+        <meshBasicMaterial color="#34414b" transparent opacity={0.72} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.277, 0]} raycast={() => undefined}>
+        <ringGeometry args={[1.18, 1.184, 96]} />
+        <meshBasicMaterial color="#242c33" transparent opacity={0.58} />
       </mesh>
     </group>
   );
@@ -187,18 +191,29 @@ function ModelScene({ xray }: { xray: boolean }) {
   const start = MODEL_PRESETS.hero;
   return (
     <>
-      <fog attach="fog" args={[xray ? "#0a0c10" : "#101216", 8, 18]} />
+      <fog attach="fog" args={[xray ? "#090b0e" : "#0b0d11", 6.5, 15]} />
       <StudioEnv />
-      <ambientLight intensity={xray ? 1.0 : 1.25} />
-      <hemisphereLight args={xray ? ["#c6d4df", "#1a1e24", 1.45] : ["#f3f5f7", "#2a2e34", 1.7]} />
-      <directionalLight position={[2.6, 4.2, 2.4]} intensity={xray ? 2.8 : 3.8} />
-      <directionalLight position={[-2.4, 2.2, 1.2]} intensity={xray ? 1.8 : 2.1} />
-      <directionalLight position={[0.2, 2.4, 3.2]} intensity={xray ? 0.9 : 1.5} />
-      <directionalLight position={[1.2, 1.2, -2.4]} intensity={0.7} />
+      <ambientLight intensity={xray ? 0.72 : 0.82} />
+      <hemisphereLight args={xray ? ["#b7c7d2", "#11151a", 1.05] : ["#d9e0e4", "#171b20", 1.18]} />
+      <directionalLight position={[2.6, 4.2, 2.4]} intensity={xray ? 1.8 : 2.35} />
+      <directionalLight position={[-2.4, 2.2, 1.2]} intensity={xray ? 1.05 : 1.25} />
+      <directionalLight position={[0.2, 2.4, 3.2]} intensity={xray ? 0.55 : 0.85} />
+      <directionalLight position={[1.2, 1.2, -2.4]} intensity={0.42} />
       <ModelGround />
       <group>
         <N20Assembly />
       </group>
+      {!xray ? (
+        <ContactShadows
+          position={[0, -0.272, 0]}
+          opacity={0.34}
+          scale={2.8}
+          blur={2.8}
+          far={1.25}
+          resolution={256}
+          frames={1}
+        />
+      ) : null}
       <OrbitControls
         makeDefault
         enableDamping
@@ -247,7 +262,7 @@ export function EngineCanvas({ photoId = "welt" }: { photoId?: "welt" | "bay" })
     }
   }, [setWebgl]);
 
-  const dpr = useMemo<[number, number]>(() => (mobile ? [1, 1.25] : [1, 1.75]), [mobile]);
+  const dpr = useMemo<[number, number]>(() => (mobile ? [1, 1.2] : [1, 1.5]), [mobile]);
 
   return (
     <Canvas
@@ -266,7 +281,7 @@ export function EngineCanvas({ photoId = "welt" }: { photoId?: "welt" | "bay" })
       style={{ width: "100%", height: "100%", display: "block" }}
       onPointerMissed={() => select(null)}
     >
-      <color attach="background" args={[visualMode === "xray" ? "#0b0d10" : schematic ? "#12141a" : "#0b0c0e"]} />
+      <color attach="background" args={[visualMode === "xray" ? "#090b0e" : schematic ? "#0b0d11" : "#0b0c0e"]} />
       <Suspense fallback={null}>
         {schematic ? <ModelScene xray={visualMode === "xray"} /> : <PhotoScene photoId={photoId} />}
       </Suspense>
