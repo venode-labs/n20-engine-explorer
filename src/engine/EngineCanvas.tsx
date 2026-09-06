@@ -36,6 +36,7 @@ function CameraDriver({ schematic }: { schematic: boolean }) {
   const preset = useExplorer((s) => s.cameraPreset);
   const nonce = useExplorer((s) => s.cameraNonce);
   const focusNonce = useExplorer((s) => s.focusNonce);
+  const explode = useExplorer((s) => s.explode);
   const reduced = usePrefersReducedMotion();
   const from = useRef(new THREE.Vector3());
   const fromTarget = useRef(new THREE.Vector3());
@@ -55,8 +56,13 @@ function CameraDriver({ schematic }: { schematic: boolean }) {
     if (schematic) {
       const partCam = selectedId && usePart ? MODEL_FOCUS[selectedId] : undefined;
       const p = partCam ?? MODEL_PRESETS[preset] ?? MODEL_PRESETS.hero;
-      pos = p.position;
       target = p.target;
+
+      const basePosition = new THREE.Vector3(...p.position);
+      const baseTarget = new THREE.Vector3(...p.target);
+      const explodeFrameScale = 1 + explode * 0.85;
+      const framedPosition = basePosition.sub(baseTarget).multiplyScalar(explodeFrameScale).add(baseTarget);
+      pos = [framedPosition.x, framedPosition.y, framedPosition.z];
     } else {
       const partCam = selectedId && usePart ? PART_FOCUS[selectedId] : undefined;
       const p = partCam ?? presetById[preset] ?? cameraPresets[0];
@@ -74,7 +80,7 @@ function CameraDriver({ schematic }: { schematic: boolean }) {
       controls.target.copy(toTarget.current);
       controls.update();
     }
-  }, [nonce, focusNonce, preset, camera, controls, reduced, schematic]);
+  }, [nonce, focusNonce, preset, explode, camera, controls, reduced, schematic]);
 
   useFrame((_, delta) => {
     if (!controls || t.current >= 1) return;
@@ -219,7 +225,7 @@ function ModelScene({ xray }: { xray: boolean }) {
         enableDamping
         dampingFactor={0.1}
         minDistance={0.32}
-        maxDistance={2.45}
+        maxDistance={4.6}
         minPolarAngle={0.12}
         maxPolarAngle={Math.PI * 0.86}
         target={start.target}
