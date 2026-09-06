@@ -42,6 +42,8 @@ ok('schematic has explicit lighting', /ambientLight/.test(canvas) && /hemisphere
 ok('explode is controlled state', /const explode = useExplorer/.test(part) && /EXPLODE\[id\]/.test(part) && /useFrame/.test(part));
 ok('explode offset map is populated', Object.keys(explode.match(/"?[a-z][a-z0-9-]*"?:\s*\[/g) ?? {}).length >= 0 && explode.includes('turbocharger') && explode.includes('engine-cover'));
 ok('unresolved inspector copy is honest', /Not marked on this photograph\. Open the 3D schematic\./.test(inspector));
+ok('inspector visibility is scoped to current photo', /hitsForPart\(part\.id\)\.some\(\(hit\) => hit\.photo === photoId\)/.test(inspector));
+ok('active photo is passed to inspector', (explorer.match(/<Inspector\s+photoId=\{photoId\}/g) ?? []).length >= 2);
 ok('hero photo zoom is not regressed', /preset\(["']hero["'][\s\S]*?1\.(4[2-9]|[5-9]\d)/.test(cameras) || /preset\(["']hero["'][\s\S]*?,\s*(?:[2-9]|1\.[5-9])/.test(cameras));
 
 const weltSection = photos.split('const WELT_HITS')[1]?.split('const BAY_HITS')[0] ?? '';
