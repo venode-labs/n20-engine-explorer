@@ -25,13 +25,15 @@ export function StageDock() {
 
   return (
     <div className="hud-panel flex max-w-full flex-col overflow-hidden rounded-[6px] p-1 sm:flex-row sm:items-center">
-      <div className="hud-scroll flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
+      <div className="hud-scroll hud-scroll-edge flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto overscroll-x-contain pr-5">
         {presets.map((p) => (
           <button
             key={p.id}
             type="button"
             onClick={() => setPreset(p.id)}
             className={cn(chipBtn, preset === p.id && "bg-elevated text-fg")}
+            aria-pressed={preset === p.id}
+            title={`${p.label} camera preset`}
           >
             {p.label}
           </button>
@@ -39,8 +41,8 @@ export function StageDock() {
       </div>
 
       {schematic ? (
-        <div className="flex h-9 min-w-0 items-center gap-2 border-t border-border px-2 sm:w-44 sm:border-t-0 sm:border-l">
-          <span className="text-[9px] uppercase tracking-[0.12em] text-subtle">Explode</span>
+        <div className="flex h-11 min-w-0 items-center gap-2 border-t border-border px-2 sm:h-9 sm:w-44 sm:border-t-0 sm:border-l">
+          <span className="text-[10px] uppercase tracking-[0.12em] text-subtle sm:text-[9px]">Explode</span>
           <input
             type="range"
             min={0}
@@ -50,11 +52,11 @@ export function StageDock() {
             className="range-explode min-w-16 flex-1"
             aria-label="Exploded view"
           />
-          <span className="w-6 text-right font-mono text-[9px] tabular-nums text-muted">{Math.round(explode * 100)}</span>
+          <span className="w-7 text-right font-mono text-[10px] tabular-nums text-muted sm:w-6 sm:text-[9px]">{Math.round(explode * 100)}</span>
         </div>
       ) : null}
 
-      <div className="flex shrink-0 items-center justify-end border-t border-border sm:border-t-0 sm:border-l sm:pl-1">
+      <div className="flex shrink-0 items-center justify-end gap-0.5 border-t border-border sm:border-t-0 sm:border-l sm:pl-1">
         <button
           type="button"
           onClick={() => setMode(mode === "context" ? "normal" : "context")}
@@ -62,7 +64,7 @@ export function StageDock() {
           aria-pressed={mode === "context"}
         >
           <Focus className="size-3.5" strokeWidth={1.6} />
-          <span className="hidden sm:inline">Isolate</span>
+          <span>Isolate</span>
         </button>
         {!schematic && (
           <button
@@ -74,10 +76,10 @@ export function StageDock() {
             id="compare-source"
           >
             <Columns2 className="size-3.5" strokeWidth={1.6} />
-            <span className="hidden sm:inline">Compare</span>
+            <span>Compare</span>
           </button>
         )}
-        <button type="button" onClick={resetView} className={iconBtn} aria-label="Reset view">
+        <button type="button" onClick={resetView} className={iconBtn} aria-label="Reset view" title="Reset view">
           <RotateCcw className="size-3.5" strokeWidth={1.6} />
         </button>
       </div>
