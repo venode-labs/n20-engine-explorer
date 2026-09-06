@@ -20,14 +20,15 @@ export function ModeSwitch() {
           type="button"
           onClick={() => setVisual(v.id)}
           className={cn(
-            "inline-flex h-8 items-center gap-1.5 rounded-[3px] px-2.5 text-[11px] tracking-[0.04em] text-muted sm:px-3",
-            "transition-[color,background-color] duration-150 hover:text-fg",
-            visual === v.id && "bg-elevated text-fg",
+            "inline-flex h-11 min-w-[4.25rem] items-center justify-center gap-1.5 whitespace-nowrap rounded-[3px] px-2.5 text-[12px] tracking-[0.035em] text-muted sm:h-8 sm:min-w-0 sm:px-3 sm:text-[11px] sm:tracking-[0.04em]",
+            "transition-[color,background-color,box-shadow] duration-150 hover:text-fg",
+            visual === v.id && "bg-elevated text-fg shadow-[inset_0_0_0_1px_rgb(255_255_255_/_0.04)]",
           )}
+          aria-label={`${v.label}: ${v.hint}`}
           aria-pressed={visual === v.id}
           title={v.hint}
         >
-          <v.Icon className="size-3.5" strokeWidth={1.6} />
+          <v.Icon className="size-3.5 shrink-0" strokeWidth={1.6} />
           <span>{v.label}</span>
         </button>
       ))}
