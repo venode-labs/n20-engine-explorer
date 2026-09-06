@@ -69,7 +69,8 @@ ok('schematic identity assertion enabled', /assertMeshIdentity\(id\)/.test(part)
 ok('PMREM studio environment present', /PMREMGenerator/.test(canvas) && /scene\.environment/.test(canvas));
 ok('schematic has explicit lighting', /ambientLight/.test(canvas) && /hemisphereLight/.test(canvas) && /directionalLight/.test(canvas));
 ok('schematic uses restrained ground and contact shadow', /ContactShadows/.test(canvas) && /#0d1014/.test(canvas));
-ok('schematic materials avoid blown-out white base', /const castAl = phys\(["']#aaa7a1["']/.test(materials) && !/turboHot = phys\(["']#ffffff["']/.test(materials));
+ok('schematic uses flat CAD material palette', /const castAl = phys\(["']#68747c["']/.test(materials) && !/makeCastAlbedo|makeNormalFrom|makeHeatAlbedo/.test(materials));
+ok('schematic CAD edges are deliberate and selectable', /EdgesGeometry/.test(part) && /_cadEdges/.test(part) && /#c1d2dc/.test(part));
 ok('explode is controlled state', /const explode = useExplorer/.test(part) && /EXPLODE\[id\]/.test(part) && /useFrame/.test(part));
 ok('explode offset map is populated', explode.includes('turbocharger') && explode.includes('engine-cover'));
 ok('unresolved inspector copy is honest', /Not marked on this photograph\. Open the 3D schematic\./.test(inspector));
@@ -82,9 +83,11 @@ ok('interaction hint is task guidance, not debug copy', !/Photo is the real engi
 ok('systems view uses technical path layout rather than generic cards', /divide-y divide-border border-y/.test(systemsView) && !/rounded-xl border border-border bg-surface p-4/.test(systemsView));
 ok('technical notes disclose photo truth and schematic status consistently', /Photo mode remains the visual source of truth/.test(technicalView) && /3D and X-ray modes are schematic teaching views/.test(technicalView) && !/CGI reconstruction previously used as the primary engine was removed/.test(technicalView));
 ok('technical source images defer offscreen work', (technicalView.match(/loading=["']lazy["']/g) ?? []).length >= 2 && (technicalView.match(/decoding=["']async["']/g) ?? []).length >= 2);
+ok('technical photo cards do not equal-height stretch', /grid items-start gap-4 sm:grid-cols-2/.test(technicalView));
 ok('search dialog uses a focus-trapping primitive', /@radix-ui\/react-dialog/.test(commandPalette) && /role=["']combobox["']/.test(commandPalette) && /role=["']listbox["']/.test(commandPalette));
 ok('VIN dialog uses a focus-trapping primitive', /@radix-ui\/react-dialog/.test(vinPanel) && !/prototype/i.test(vinPanel));
 ok('help dialog uses a focus-trapping primitive', /@radix-ui\/react-dialog/.test(helpOverlay));
+ok('Radix dialog title ids are not overridden', !/Dialog\.Title[^>]*\sid=/.test(`${commandPalette}\n${vinPanel}\n${helpOverlay}`));
 const subtle = styles.match(/--color-subtle:\s*(#[0-9a-f]{6})/i)?.[1];
 const surface = styles.match(/--color-surface:\s*(#[0-9a-f]{6})/i)?.[1];
 ok('small text contrast meets WCAG AA', Boolean(subtle && surface && contrastRatio(subtle, surface) >= 4.5), subtle && surface ? `${contrastRatio(subtle, surface).toFixed(2)}:1` : 'colour tokens missing');
