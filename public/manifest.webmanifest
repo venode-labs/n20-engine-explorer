@@ -1,0 +1,18 @@
+{
+  "name": "Viscerra",
+  "short_name": "Viscerra",
+  "description": "Photographic-first interactive engine anatomy exhibit with explicit 3D and X-ray schematic views.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#090a0c",
+  "theme_color": "#090a0c",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
