@@ -27,7 +27,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 export function Inspector({ onClose, plain, photoId }: { onClose?: () => void; plain?: boolean; photoId: PhotoId }) {
   const selectedId = useExplorer((s) => s.selectedId);
   const select = useExplorer((s) => s.select);
-  const visualMode = useExplorer((s) => s.setVisualMode);
+  const setVisualMode = useExplorer((s) => s.setVisualMode);
   const currentVisual = useExplorer((s) => s.visualMode);
   const setAppView = useExplorer((s) => s.setAppView);
   const [openHow, setOpenHow] = useState(true);
@@ -38,18 +38,26 @@ export function Inspector({ onClose, plain, photoId }: { onClose?: () => void; p
   if (!part) {
     return (
       <aside className={shell}>
-        <div className="flex items-start justify-between gap-2 border-b border-border px-4 py-4">
-          <div>
-            <p className="kicker">Exhibit 01</p>
-            <h2 className="mt-1 text-base font-medium tracking-tight text-fg">BMW N20B20</h2>
+        {!plain ? (
+          <div className="flex items-start justify-between gap-2 border-b border-border px-4 py-4">
+            <div>
+              <p className="kicker">Exhibit 01</p>
+              <h2 className="mt-1 text-base font-medium tracking-tight text-fg">BMW N20B20</h2>
+            </div>
+            {onClose ? (
+              <button type="button" className={iconBtn} aria-label="Close inspector" onClick={onClose}>
+                <X className="size-4" strokeWidth={1.75} />
+              </button>
+            ) : null}
           </div>
-          {onClose ? (
-            <button type="button" className={iconBtn} aria-label="Close inspector" onClick={onClose}>
-              <X className="size-4" strokeWidth={1.75} />
-            </button>
-          ) : null}
-        </div>
+        ) : null}
         <div className="space-y-4 px-4 py-4 text-sm leading-relaxed text-muted">
+          {plain ? (
+            <div>
+              <p className="kicker">Exhibit 01</p>
+              <p className="mt-1 text-base font-medium tracking-tight text-fg">BMW N20B20</p>
+            </div>
+          ) : null}
           <p>2015 428i F32 · Australia · RHD. The plate is a photograph of a physical N20.</p>
           <p>Click the engine, pick from the catalogue, or press / to search.</p>
           <p className="kicker">↑↓ step · Esc clear · 1–3 views</p>
@@ -65,32 +73,39 @@ export function Inspector({ onClose, plain, photoId }: { onClose?: () => void; p
 
   return (
     <aside className={shell}>
-      <div className="flex items-start justify-between gap-2 border-b border-border px-4 py-4">
-        <div className="min-w-0">
-          <p className="kicker">
+      {!plain ? (
+        <div className="flex items-start justify-between gap-2 border-b border-border px-4 py-4">
+          <div className="min-w-0">
+            <p className="kicker">
+              {sys?.index} · {sys?.label ?? part.system}
+            </p>
+            <h2 className="mt-1 text-lg font-medium tracking-tight text-balance text-fg">{part.canonicalName}</h2>
+          </div>
+          <button
+            type="button"
+            className={iconBtn}
+            aria-label="Clear selection"
+            onClick={() => {
+              select(null);
+              onClose?.();
+            }}
+          >
+            <X className="size-4" strokeWidth={1.75} />
+          </button>
+        </div>
+      ) : null}
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+        {plain ? (
+          <p className="kicker mb-2">
             {sys?.index} · {sys?.label ?? part.system}
           </p>
-          <h2 className="mt-1 text-lg font-medium tracking-tight text-balance text-fg">{part.canonicalName}</h2>
-        </div>
-        <button
-          type="button"
-          className={iconBtn}
-          aria-label="Clear selection"
-          onClick={() => {
-            select(null);
-            onClose?.();
-          }}
-        >
-          <X className="size-4" strokeWidth={1.75} />
-        </button>
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+        ) : null}
         <p className="text-sm leading-relaxed text-pretty text-fg">{part.function}</p>
 
         {schematicOnly && currentVisual === "photo" && (
           <button
             type="button"
-            onClick={() => visualMode("model")}
+            onClick={() => setVisualMode("model")}
             className="mt-4 flex w-full items-center gap-2 rounded-[4px] border border-border bg-elevated px-3 py-2.5 text-left text-xs text-fg hover:border-border-strong"
           >
             <Box className="size-3.5 shrink-0 text-accent" strokeWidth={1.75} />
@@ -107,16 +122,31 @@ export function Inspector({ onClose, plain, photoId }: { onClose?: () => void; p
           </button>
         )}
 
-        <div className="mt-4 flex flex-wrap gap-1.5">
-          <button type="button" className={cn(chipBtn, "border border-border")} onClick={() => visualMode("photo")}>
+        <div className="mt-4 flex flex-wrap gap-1.5" role="group" aria-label="Component view">
+          <button
+            type="button"
+            className={cn(chipBtn, "border border-border", currentVisual === "photo" && "bg-elevated text-fg")}
+            onClick={() => setVisualMode("photo")}
+            aria-pressed={currentVisual === "photo"}
+          >
             <Camera className="mr-1 size-3.5" strokeWidth={1.75} />
             Photo
           </button>
-          <button type="button" className={cn(chipBtn, "border border-border")} onClick={() => visualMode("model")}>
+          <button
+            type="button"
+            className={cn(chipBtn, "border border-border", currentVisual === "model" && "bg-elevated text-fg")}
+            onClick={() => setVisualMode("model")}
+            aria-pressed={currentVisual === "model"}
+          >
             <Box className="mr-1 size-3.5" strokeWidth={1.75} />
             3D
           </button>
-          <button type="button" className={cn(chipBtn, "border border-border")} onClick={() => visualMode("xray")}>
+          <button
+            type="button"
+            className={cn(chipBtn, "border border-border", currentVisual === "xray" && "bg-elevated text-fg")}
+            onClick={() => setVisualMode("xray")}
+            aria-pressed={currentVisual === "xray"}
+          >
             <Scan className="mr-1 size-3.5" strokeWidth={1.75} />
             X-ray
           </button>
