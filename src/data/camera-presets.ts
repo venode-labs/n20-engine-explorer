@@ -1,8 +1,16 @@
-import { cameraFromUv, photoViews, type PhotoId } from "@/engine/photo-views";
+import { cameraFromUv, photoViews, type PhotoId, type PhotoView } from "@/engine/photo-views";
 
 export interface CameraPreset {
   id: string;
   label: string;
+  photo: PhotoId;
+  uv: [number, number];
+  zoom: number;
+  position: [number, number, number];
+  target: [number, number, number];
+}
+
+export interface PhotoFocus {
   photo: PhotoId;
   uv: [number, number];
   zoom: number;
@@ -15,6 +23,18 @@ function preset(id: string, label: string, photo: PhotoId, uv: [number, number],
   return { id, label, photo, uv, zoom, ...cam };
 }
 
+function focusMap(view: PhotoView): Record<string, PhotoFocus> {
+  return Object.fromEntries(
+    view.hits.map((hit) => {
+      const uv: [number, number] = [(hit.rect.u0 + hit.rect.u1) / 2, (hit.rect.v0 + hit.rect.v1) / 2];
+      const extent = Math.max(hit.rect.u1 - hit.rect.u0, hit.rect.v1 - hit.rect.v0);
+      const zoom = Math.min(3.2, Math.max(1.6, 0.7 / Math.max(0.05, extent)));
+      const cam = cameraFromUv(view, uv, zoom);
+      return [hit.id, { photo: view.id, uv, zoom, ...cam }];
+    }),
+  );
+}
+
 export const cameraPresets: CameraPreset[] = [
   preset("hero", "Hero", "welt", [0.53, 0.47], 1.58),
   preset("cover", "Cover", "welt", [0.33, 0.23], 1.8),
@@ -24,23 +44,29 @@ export const cameraPresets: CameraPreset[] = [
   preset("bay", "In-bay", "bay", [0.50, 0.46], 1.92),
 ];
 
-export const presetById = Object.fromEntries(cameraPresets.map((p) => [p.id, p]));
+export const presetById = Object.fromEntries(cameraPresets.map((entry) => [entry.id, entry]));
 
 /**
- * Photo focus exists only for calibrated photo hits. Bay is evaluated first so
- * duplicate parts prefer the higher-resolution Welt calibration where available.
+ * Every photograph owns its own focus map. Duplicate components (for example
+ * engine-cover and oil-cap) must use coordinates calibrated for the photograph
+ * currently on screen rather than coordinates from another physical engine.
  */
-export const PART_FOCUS: Record<
-  string,
-  { photo: PhotoId; uv: [number, number]; zoom: number; position: [number, number, number]; target: [number, number, number] }
-> = Object.fromEntries(
-  [photoViews.bay, photoViews.welt].flatMap((view) =>
-    view.hits.map((hit) => {
-      const uv: [number, number] = [(hit.rect.u0 + hit.rect.u1) / 2, (hit.rect.v0 + hit.rect.v1) / 2];
-      const extent = Math.max(hit.rect.u1 - hit.rect.u0, hit.rect.v1 - hit.rect.v0);
-      const zoom = Math.min(3.2, Math.max(1.6, 0.7 / Math.max(0.05, extent)));
-      const cam = cameraFromUv(view, uv, zoom);
-      return [hit.id, { photo: view.id, uv, zoom, ...cam }];
-    }),
-  ),
-);
+export const PHOTO_FOCUS: Record<PhotoId, Record<string, PhotoFocus>> = {
+  welt: focusMap(photoViews.welt),
+  bay: focusMap(photoViews.bay),
+};
+
+export function photoFocus(photo: PhotoId, partId: string): PhotoFocus | undefined {
+  return PHOTO_FOCUS[photo][partId];
+}
+
+/**
+ * Preferred-photo lookup used only to choose which verified photograph to open
+ * when a component appears on more than one plate. The higher-resolution Welt
+ * plate remains preferred for duplicate components; camera focusing itself must
+ * use `photoFocus(activePhoto, partId)`.
+ */
+export const PART_FOCUS: Record<string, PhotoFocus> = {
+  ...PHOTO_FOCUS.bay,
+  ...PHOTO_FOCUS.welt,
+};
