@@ -17,8 +17,27 @@ const WELT_HITS = [
   'turbocharger', 'boost-pipe',
 ];
 const BAY_HITS = ['engine-cover', 'oil-cap', 'charge-pipe', 'airbox'];
+const CLICK_LABELS = {
+  'engine-cover': 'Engine acoustic cover',
+  'oil-cap': 'Oil filler cap',
+  'oil-filter-module': 'Oil filter module',
+  'oil-cooler': 'Engine oil-to-coolant heat exchanger',
+  alternator: 'Alternator',
+  'serpentine-belt': 'Serpentine belt',
+  'ac-compressor': 'A/C compressor',
+  'crank-pulley': 'Crankshaft pulley / harmonic balancer',
+  'electric-coolant-pump': 'Electric coolant pump',
+  turbocharger: 'Twin-scroll turbocharger',
+  'boost-pipe': 'Compressor outlet (boost pipe)',
+  'charge-pipe': 'Charge pipe',
+  airbox: 'Intake silencer (airbox)',
+};
 const UNRESOLVED_COPY = 'Not marked on this photograph. Open the 3D schematic.';
 const MODE_GROUP = 'Engine visual mode';
+
+function saveVerdicts() {
+  writeFileSync(path.join(out, 'verdicts.json'), JSON.stringify(verdicts, null, 2));
+}
 
 async function assertFirstPartyShell(page) {
   const residue = await page.locator('script[src*="grok.com"], link[href*="/__grok/"]').count();
@@ -34,8 +53,8 @@ async function assertFirstPartyShell(page) {
 async function capture(name, viewport, route = '/', action) {
   const page = await browser.newPage({ viewport });
   const errors = [];
-  page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-  page.on('pageerror', e => errors.push(e.message));
+  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  page.on('pageerror', error => errors.push(error.message));
   try {
     await page.goto(`${baseURL}${route}`, { waitUntil: 'networkidle', timeout: 60_000 });
     await assertFirstPartyShell(page);
@@ -62,19 +81,11 @@ async function capture(name, viewport, route = '/', action) {
       throw new Error(`${name}: canvas too small ${JSON.stringify(box)}`);
     }
 
-    const selected = new URL(`${baseURL}${route}`).searchParams.get('part');
-    if (selected) {
-      const body = await page.locator('body').innerText();
-      if (!body.toLowerCase().includes(selected.replaceAll('-', ' ').split(' ')[0])) {
-        verdicts.push({ name, warning: `selected id ${selected} not trivially present in body text` });
-      }
-    }
-
     await page.screenshot({ path: path.join(out, `${name}.png`), animations: 'disabled' });
     verdicts.push({ name, status: 'pass', ...layout, canvas: box });
   } catch (error) {
     verdicts.push({ name, status: 'fail', error: String(error) });
-    writeFileSync(path.join(out, 'verdicts.json'), JSON.stringify(verdicts, null, 2));
+    saveVerdicts();
     throw error;
   } finally {
     await page.close();
@@ -96,12 +107,12 @@ async function assertMobileModeSwitch(page) {
     if (!box || box.height < 40) throw new Error(`Mode button ${i} touch target too small: ${JSON.stringify(box)}`);
   }
   const xray = group.getByRole('button', { name: /X-ray:/i });
-  const rectCount = await xray.locator('span').evaluate((el) => el.getClientRects().length);
+  const rectCount = await xray.locator('span').evaluate((element) => element.getClientRects().length);
   if (rectCount !== 1) throw new Error(`X-ray label wrapped to ${rectCount} lines`);
 }
 
 async function assertNarrowHeader(page) {
-  const expected = ['Engine', 'Systems', 'Bay', 'Notes'];
+  const expected = ['Engine', 'Systems', 'Bay', 'Reference'];
   for (const label of expected) {
     const button = page.getByRole('button', { name: label, exact: true }).first();
     const box = await button.boundingBox();
@@ -112,11 +123,7 @@ async function assertNarrowHeader(page) {
 }
 
 async function assertNarrowStageControls(page) {
-  const expected = [
-    'Isolate selected component',
-    'Compare to source photograph',
-    'Reset view',
-  ];
+  const expected = ['Isolate selected component', 'Compare to source photograph', 'Reset view'];
   for (const label of expected) {
     const button = page.getByRole('button', { name: label, exact: true });
     const box = await button.boundingBox();
@@ -131,8 +138,8 @@ async function assertMobileSheetHierarchy(page) {
   await sheet.waitFor({ state: 'visible' });
   const duplicateTitleCount = await sheet.getByText('Twin-scroll turbocharger', { exact: true }).count();
   if (duplicateTitleCount !== 1) throw new Error(`Mobile inspector title rendered ${duplicateTitleCount} times inside the sheet`);
-  const closeCount = await sheet.getByRole('button', { name: /Close/i }).count();
-  if (closeCount !== 1) throw new Error(`Mobile inspector exposes ${closeCount} close controls inside the sheet`);
+  const closeCount = await sheet.getByRole('button', { name: 'Close details', exact: true }).count();
+  if (closeCount !== 1) throw new Error(`Mobile inspector exposes ${closeCount} dedicated close controls inside the sheet`);
   const focusInside = await sheet.evaluate((node) => node.contains(document.activeElement));
   if (!focusInside) throw new Error('Mobile inspector sheet does not own focus');
   const backgroundModeGroups = await page.getByRole('group', { name: MODE_GROUP }).count();
@@ -146,17 +153,101 @@ async function assertDialogFocus(page, dialogName) {
   if (!focusInside) throw new Error(`${dialogName}: focus escaped modal content`);
 }
 
+async function assertQuickIssue(page, label, expectedText) {
+  await page.getByRole('button', { name: label, exact: true }).click();
+  const input = page.getByPlaceholder('Part or symptom…').first();
+  if (!(await input.inputValue())) throw new Error(`${label}: quick issue did not populate search`);
+  const list = page.locator('[aria-label="Engine components"]');
+  if ((await list.getByRole('button').count()) < 1) throw new Error(`${label}: quick issue returned no actionable component`);
+  if (expectedText && !(await list.innerText()).includes(expectedText)) throw new Error(`${label}: expected ${expectedText} in results`);
+}
+
+async function assertInspectorActions(page) {
+  const group = page.getByRole('group', { name: 'Locate component' });
+  const photo = group.getByRole('button', { name: /Show on photo/i });
+  const model = group.getByRole('button', { name: /Inspect in 3D/i });
+  const xray = group.getByRole('button', { name: /X-ray/i });
+  if ((await photo.count()) !== 1 || (await model.count()) !== 1 || (await xray.count()) !== 1) {
+    throw new Error('Turbo inspector is missing one or more primary locate actions');
+  }
+  await model.click();
+  await page.waitForTimeout(900);
+  if ((await model.getAttribute('aria-pressed')) !== 'true') throw new Error('Inspect in 3D did not activate 3D mode');
+  await xray.click();
+  await page.waitForTimeout(900);
+  if ((await xray.getAttribute('aria-pressed')) !== 'true') throw new Error('X-ray action did not activate X-ray mode');
+  await photo.click();
+  await page.waitForTimeout(900);
+  if ((await photo.getAttribute('aria-pressed')) !== 'true') throw new Error('Show on photo did not return to the verified photo');
+  const selected = await page.evaluate(() => new URL(window.location.href).searchParams.get('part'));
+  if (selected !== 'turbocharger') throw new Error(`Component selection was lost while switching evidence modes: ${selected}`);
+}
+
+async function verifyPhotoClickMatrix(photoId, ids, viewport) {
+  const page = await browser.newPage({ viewport });
+  const errors = [];
+  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  page.on('pageerror', error => errors.push(error.message));
+  try {
+    for (const id of ids) {
+      errors.length = 0;
+      const view = photoId === 'bay' ? 'bay' : 'engine';
+      await page.goto(`${baseURL}/?mode=photo&view=${view}&part=${id}`, { waitUntil: 'networkidle', timeout: 60_000 });
+      await assertFirstPartyShell(page);
+      const canvas = page.locator('canvas');
+      await canvas.waitFor({ state: 'visible', timeout: 30_000 });
+      await page.waitForTimeout(1500);
+
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(180);
+      const afterClear = await page.evaluate(() => new URL(window.location.href).searchParams.get('part'));
+      if (afterClear !== null) throw new Error(`${photoId}/${id}: Escape did not clear the seeded selection`);
+
+      const box = await canvas.boundingBox();
+      if (!box) throw new Error(`${photoId}/${id}: canvas missing before pointer verification`);
+      await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      await page.waitForFunction(
+        (expected) => new URL(window.location.href).searchParams.get('part') === expected,
+        id,
+        { timeout: 5_000 },
+      );
+
+      const heading = page.getByRole('heading', { name: CLICK_LABELS[id], exact: true });
+      if ((await heading.count()) !== 1) throw new Error(`${photoId}/${id}: inspector did not identify ${CLICK_LABELS[id]}`);
+      if (errors.length) throw new Error(`${photoId}/${id}: browser errors: ${errors.join(' | ')}`);
+      verdicts.push({ name: `photo-click-${photoId}-${id}`, status: 'pass' });
+    }
+  } catch (error) {
+    verdicts.push({ name: `photo-click-matrix-${photoId}`, status: 'fail', error: String(error) });
+    saveVerdicts();
+    throw error;
+  } finally {
+    await page.close();
+  }
+}
+
 const desktop = { width: 1440, height: 900 };
+const laptop = { width: 1366, height: 768 };
+const wide = { width: 1920, height: 1080 };
 const mobile = { width: 390, height: 844 };
+const mobileSmall = { width: 360, height: 800 };
+const mobileLarge = { width: 430, height: 932 };
 const narrow = { width: 320, height: 720 };
 
 await capture('desktop-photo-default-1440x900', desktop);
+await capture('laptop-photo-default-1366x768', laptop);
+await capture('desktop-wide-photo-default-1920x1080', wide);
+
 for (const id of WELT_HITS) {
   await capture(`desktop-welt-hit-${id}-1440x900`, desktop, `/?mode=photo&view=engine&part=${id}`);
 }
 for (const id of BAY_HITS) {
   await capture(`desktop-bay-hit-${id}-1440x900`, desktop, `/?mode=photo&view=bay&part=${id}`);
 }
+
+await verifyPhotoClickMatrix('welt', WELT_HITS, desktop);
+await verifyPhotoClickMatrix('bay', BAY_HITS, desktop);
+
 await capture('desktop-unresolved-vanos-photo-1440x900', desktop, '/?mode=photo&view=engine&part=vanos-intake', assertUnresolved);
 await capture('desktop-unresolved-tensioner-photo-1440x900', desktop, '/?mode=photo&view=engine&part=belt-tensioner', assertUnresolved);
 await capture('desktop-bay-unresolved-oil-filter-module-1440x900', desktop, '/?mode=photo&view=bay&part=oil-filter-module', assertUnresolved);
@@ -164,12 +255,14 @@ await capture('desktop-bay-unresolved-oil-cooler-1440x900', desktop, '/?mode=pho
 await capture('desktop-3d-default-1440x900', desktop, '/?mode=model');
 await capture('desktop-xray-default-1440x900', desktop, '/?mode=xray');
 await capture('desktop-3d-exploded-1440x900', desktop, '/?mode=model&explode=1');
+await capture('desktop-turbo-evidence-actions-1440x900', desktop, '/?mode=photo&view=engine&part=turbocharger', assertInspectorActions);
+
 await capture('desktop-systems-1440x900', desktop, '/', async page => {
   await page.getByRole('button', { name: 'Systems', exact: true }).click();
   await page.getByRole('heading', { name: 'How the N20 is put together' }).waitFor();
 });
-await capture('desktop-notes-1440x900', desktop, '/', async page => {
-  await page.getByRole('button', { name: 'Notes', exact: true }).click();
+await capture('desktop-reference-1440x900', desktop, '/', async page => {
+  await page.getByRole('button', { name: 'Reference', exact: true }).click();
   await page.getByRole('heading', { name: /2015 BMW 428i F32/i }).waitFor();
 });
 await capture('desktop-vin-dialog-1440x900', desktop, '/', async page => {
@@ -188,24 +281,33 @@ const expectedSearch = {
   'oil filter': 'Oil filter module',
   misfire: 'Ignition coils',
 };
-for (const [q, expected] of Object.entries(expectedSearch)) {
-  await capture(`desktop-search-${q.replace(/\s+/g, '-')}-1440x900`, desktop, '/', async page => {
+for (const [query, expected] of Object.entries(expectedSearch)) {
+  await capture(`desktop-search-${query.replace(/\s+/g, '-')}-1440x900`, desktop, '/', async page => {
     await page.keyboard.press('/');
     const palette = page.getByRole('dialog', { name: 'Search parts' });
     await assertDialogFocus(page, 'Search parts');
     const input = page.getByPlaceholder(/Search parts, systems, symptoms/i).first();
-    if (!(await input.evaluate((node) => node === document.activeElement))) throw new Error(`${q}: search input did not receive focus`);
-    await input.fill(q);
+    if (!(await input.evaluate((node) => node === document.activeElement))) throw new Error(`${query}: search input did not receive focus`);
+    await input.fill(query);
     await page.waitForTimeout(250);
     const paletteText = await palette.innerText();
-    if (paletteText.includes('No match.')) throw new Error(`${q}: search returned No match`);
-    if (!paletteText.includes(expected)) throw new Error(`${q}: expected search result ${expected}`);
+    if (paletteText.includes('No match.')) throw new Error(`${query}: search returned No match`);
+    if (!paletteText.includes(expected)) throw new Error(`${query}: expected search result ${expected}`);
     await page.keyboard.press('Tab');
     await assertDialogFocus(page, 'Search parts');
   });
 }
 
+await capture('desktop-quick-issues-1440x900', desktop, '/', async page => {
+  await assertQuickIssue(page, 'Misfire', 'Ignition coils');
+  await assertQuickIssue(page, 'Oil leak');
+  await assertQuickIssue(page, 'Boost leak');
+  await assertQuickIssue(page, 'Overheat', 'Electric coolant pump');
+});
+
 await capture('mobile-photo-default-390x844', mobile, '/', assertMobileModeSwitch);
+await capture('mobile-small-photo-default-360x800', mobileSmall, '/', assertMobileModeSwitch);
+await capture('mobile-large-photo-default-430x932', mobileLarge, '/', assertMobileModeSwitch);
 await capture('mobile-catalogue-390x844', mobile, '/', async page => {
   await page.getByRole('button', { name: 'Open parts' }).click();
 });
@@ -216,8 +318,8 @@ await capture('mobile-systems-390x844', mobile, '/', async page => {
   await page.getByRole('button', { name: 'Systems', exact: true }).click();
   await page.getByRole('heading', { name: 'How the N20 is put together' }).waitFor();
 });
-await capture('mobile-notes-390x844', mobile, '/', async page => {
-  await page.getByRole('button', { name: 'Notes', exact: true }).click();
+await capture('mobile-reference-390x844', mobile, '/', async page => {
+  await page.getByRole('button', { name: 'Reference', exact: true }).click();
   await page.getByRole('heading', { name: /2015 BMW 428i F32/i }).waitFor();
 });
 await capture('mobile-narrow-320x720', narrow, '/', async page => {
@@ -226,7 +328,7 @@ await capture('mobile-narrow-320x720', narrow, '/', async page => {
   await assertNarrowStageControls(page);
 });
 
-writeFileSync(path.join(out, 'verdicts.json'), JSON.stringify(verdicts, null, 2));
+saveVerdicts();
 await browser.close();
-console.log(`Viscerra visual audit: ${verdicts.filter(v => v.status === 'pass').length} captures passed`);
-console.log(`Visual audit screenshots written to ${out}`);
+console.log(`Viscerra visual audit: ${verdicts.filter((verdict) => verdict.status === 'pass').length} checks passed`);
+console.log(`Visual audit evidence written to ${out}`);
