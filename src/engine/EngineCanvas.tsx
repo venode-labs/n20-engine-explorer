@@ -2,10 +2,10 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, OrbitControls, useTexture } from "@react-three/drei";
 import * as THREE from "three";
-import { cameraPresets, PART_FOCUS, presetById } from "@/data/camera-presets";
+import { cameraPresets, photoFocus, presetById } from "@/data/camera-presets";
 import { useExplorer } from "@/store/explorer";
 import { PhotoEngine } from "./PhotoEngine";
-import { photoViews } from "./photo-views";
+import { photoViews, type PhotoId } from "./photo-views";
 import { N20Assembly } from "./cgi/N20Assembly";
 import { MODEL_FOCUS, MODEL_PRESETS } from "./model-cameras";
 
@@ -30,13 +30,13 @@ type ControlsApi = {
   maxPolarAngle: number;
 };
 
-function CameraDriver({ schematic }: { schematic: boolean }) {
+function CameraDriver({ schematic, photoId }: { schematic: boolean; photoId?: PhotoId }) {
   const { camera } = useThree();
-  const controls = useThree((s) => s.controls) as ControlsApi | null;
-  const preset = useExplorer((s) => s.cameraPreset);
-  const nonce = useExplorer((s) => s.cameraNonce);
-  const focusNonce = useExplorer((s) => s.focusNonce);
-  const explode = useExplorer((s) => s.explode);
+  const controls = useThree((state) => state.controls) as ControlsApi | null;
+  const preset = useExplorer((state) => state.cameraPreset);
+  const nonce = useExplorer((state) => state.cameraNonce);
+  const focusNonce = useExplorer((state) => state.focusNonce);
+  const explode = useExplorer((state) => state.explode);
   const reduced = usePrefersReducedMotion();
   const from = useRef(new THREE.Vector3());
   const fromTarget = useRef(new THREE.Vector3());
@@ -55,19 +55,19 @@ function CameraDriver({ schematic }: { schematic: boolean }) {
     let target: [number, number, number];
     if (schematic) {
       const partCam = selectedId && usePart ? MODEL_FOCUS[selectedId] : undefined;
-      const p = partCam ?? MODEL_PRESETS[preset] ?? MODEL_PRESETS.hero;
-      target = p.target;
+      const resolved = partCam ?? MODEL_PRESETS[preset] ?? MODEL_PRESETS.hero;
+      target = resolved.target;
 
-      const basePosition = new THREE.Vector3(...p.position);
-      const baseTarget = new THREE.Vector3(...p.target);
+      const basePosition = new THREE.Vector3(...resolved.position);
+      const baseTarget = new THREE.Vector3(...resolved.target);
       const explodeFrameScale = 1 + explode * 0.85;
       const framedPosition = basePosition.sub(baseTarget).multiplyScalar(explodeFrameScale).add(baseTarget);
       pos = [framedPosition.x, framedPosition.y, framedPosition.z];
     } else {
-      const partCam = selectedId && usePart ? PART_FOCUS[selectedId] : undefined;
-      const p = partCam ?? presetById[preset] ?? cameraPresets[0];
-      pos = p.position;
-      target = p.target;
+      const partCam = selectedId && usePart && photoId ? photoFocus(photoId, selectedId) : undefined;
+      const resolved = partCam ?? presetById[preset] ?? cameraPresets[0];
+      pos = resolved.position;
+      target = resolved.target;
     }
 
     from.current.copy(camera.position);
@@ -80,7 +80,7 @@ function CameraDriver({ schematic }: { schematic: boolean }) {
       controls.target.copy(toTarget.current);
       controls.update();
     }
-  }, [nonce, focusNonce, preset, explode, camera, controls, reduced, schematic]);
+  }, [nonce, focusNonce, preset, explode, camera, controls, reduced, schematic, photoId]);
 
   useFrame((_, delta) => {
     if (!controls || t.current >= 1) return;
@@ -94,10 +94,10 @@ function CameraDriver({ schematic }: { schematic: boolean }) {
   return null;
 }
 
-function PhotoScene({ photoId }: { photoId: "welt" | "bay" }) {
+function PhotoScene({ photoId }: { photoId: PhotoId }) {
   const view = photoViews[photoId];
   const span = Math.max(view.width, view.height);
-  const compare = useExplorer((s) => s.compareMode);
+  const compare = useExplorer((state) => state.compareMode);
   return (
     <>
       <fog attach="fog" args={["#0b0c0e", span * 2.4, span * 5.5]} />
@@ -116,37 +116,37 @@ function PhotoScene({ photoId }: { photoId: "welt" | "bay" }) {
         maxAzimuthAngle={0.48}
         target={[0, 0, 0]}
       />
-      <CameraDriver schematic={false} />
+      <CameraDriver schematic={false} photoId={photoId} />
     </>
   );
 }
 
 function makeStudioEnv(gl: THREE.WebGLRenderer) {
   const pmrem = new THREE.PMREMGenerator(gl);
-  const sc = new THREE.Scene();
-  sc.add(new THREE.HemisphereLight("#dce5ec", "#15181d", 1.05));
+  const scene = new THREE.Scene();
+  scene.add(new THREE.HemisphereLight("#dce5ec", "#15181d", 1.05));
   const ceil = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshBasicMaterial({ color: "#dfe4e7" }));
   ceil.rotation.x = Math.PI / 2;
   ceil.position.y = 3.2;
-  sc.add(ceil);
+  scene.add(ceil);
   const wall = new THREE.Mesh(new THREE.PlaneGeometry(10, 6), new THREE.MeshBasicMaterial({ color: "#aeb9c2" }));
   wall.position.z = -4;
-  sc.add(wall);
+  scene.add(wall);
   const warm = new THREE.Mesh(new THREE.PlaneGeometry(10, 6), new THREE.MeshBasicMaterial({ color: "#b5aa9e" }));
   warm.rotation.y = -Math.PI / 2;
   warm.position.x = 4;
-  sc.add(warm);
+  scene.add(warm);
   const cool = new THREE.Mesh(new THREE.PlaneGeometry(10, 6), new THREE.MeshBasicMaterial({ color: "#9faeb9" }));
   cool.rotation.y = Math.PI / 2;
   cool.position.x = -4;
-  sc.add(cool);
-  const tex = pmrem.fromScene(sc, 0.06).texture;
-  sc.traverse((obj) => {
+  scene.add(cool);
+  const tex = pmrem.fromScene(scene, 0.06).texture;
+  scene.traverse((obj) => {
     const mesh = obj as THREE.Mesh;
     if (mesh.geometry) mesh.geometry.dispose();
-    const mat = mesh.material as THREE.Material | THREE.Material[] | undefined;
-    if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
-    else mat?.dispose();
+    const material = mesh.material as THREE.Material | THREE.Material[] | undefined;
+    if (Array.isArray(material)) material.forEach((entry) => entry.dispose());
+    else material?.dispose();
   });
   return { tex, pmrem };
 }
@@ -206,9 +206,7 @@ function ModelScene({ xray }: { xray: boolean }) {
       <directionalLight position={[0.2, 2.4, 3.2]} intensity={xray ? 0.55 : 0.85} />
       <directionalLight position={[1.2, 1.2, -2.4]} intensity={0.42} />
       <ModelGround />
-      <group>
-        <N20Assembly />
-      </group>
+      <group><N20Assembly /></group>
       {!xray ? (
         <ContactShadows
           position={[0, -0.272, 0]}
@@ -235,11 +233,11 @@ function ModelScene({ xray }: { xray: boolean }) {
   );
 }
 
-export function EngineCanvas({ photoId = "welt" }: { photoId?: "welt" | "bay" }) {
+export function EngineCanvas({ photoId = "welt" }: { photoId?: PhotoId }) {
   const [mobile, setMobile] = useState(false);
-  const select = useExplorer((s) => s.select);
-  const setWebgl = useExplorer((s) => s.setWebgl);
-  const visualMode = useExplorer((s) => s.visualMode);
+  const select = useExplorer((state) => state.select);
+  const setWebgl = useExplorer((state) => state.setWebgl);
+  const visualMode = useExplorer((state) => state.visualMode);
   const schematic = visualMode !== "photo";
   const photoStart = presetById[photoId === "bay" ? "bay" : "hero"] ?? cameraPresets[0];
   const modelStart = MODEL_PRESETS.hero;
@@ -260,9 +258,9 @@ export function EngineCanvas({ photoId = "welt" }: { photoId?: "welt" | "bay" })
 
   useEffect(() => {
     try {
-      const c = document.createElement("canvas");
-      const gl = c.getContext("webgl2") ?? c.getContext("webgl");
-      setWebgl(!!gl);
+      const canvas = document.createElement("canvas");
+      const gl = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
+      setWebgl(Boolean(gl));
     } catch {
       setWebgl(false);
     }
@@ -272,7 +270,7 @@ export function EngineCanvas({ photoId = "welt" }: { photoId?: "welt" | "bay" })
 
   return (
     <Canvas
-      key={schematic ? "model" : "photo"}
+      key={schematic ? "model" : `photo-${photoId}`}
       className="h-full w-full touch-none"
       dpr={dpr}
       gl={{
