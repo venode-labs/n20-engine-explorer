@@ -1,10 +1,16 @@
 import { Search, X } from "lucide-react";
-import { components } from "@/data/components";
 import { searchComponentsRich } from "@/data/search";
 import { engineSystems, systemById } from "@/data/systems";
 import { useExplorer } from "@/store/explorer";
 import { cn } from "@/lib/cn";
 import { panelShell } from "./chrome";
+
+const QUICK_ISSUES = [
+  { label: "Misfire", query: "misfire" },
+  { label: "Oil leak", query: "oil leak" },
+  { label: "Boost leak", query: "boost leak" },
+  { label: "Overheat", query: "overheat" },
+] as const;
 
 export function PartsNav({ onPick, plain }: { onPick?: () => void; plain?: boolean }) {
   const query = useExplorer((s) => s.query);
@@ -16,25 +22,25 @@ export function PartsNav({ onPick, plain }: { onPick?: () => void; plain?: boole
   const appView = useExplorer((s) => s.appView);
   const searchId = plain ? "part-search-mobile" : "part-search";
 
-  const list = searchComponentsRich(query).filter((c) => {
-    if (c.bayOnly && appView !== "bay") return false;
-    if (system !== "all" && c.system !== system) return false;
+  const list = searchComponentsRich(query).filter((component) => {
+    if (component.bayOnly && appView !== "bay") return false;
+    if (system !== "all" && component.system !== system) return false;
     return true;
   });
 
   const groups = engineSystems
-    .filter((s) => s.id !== "all")
-    .map((s) => ({ ...s, parts: list.filter((c) => c.system === s.id) }))
-    .filter((g) => g.parts.length);
+    .filter((entry) => entry.id !== "all")
+    .map((entry) => ({ ...entry, parts: list.filter((component) => component.system === entry.id) }))
+    .filter((group) => group.parts.length);
 
-  const modelled = components.filter((c) => !c.bayOnly).length;
+  const filtered = Boolean(query.trim()) || system !== "all";
 
   return (
     <aside className={plain ? "flex h-full min-h-0 flex-col overflow-hidden bg-surface" : panelShell}>
       <div className="border-b border-border px-3 py-3">
         <div className="flex items-baseline justify-between gap-3">
-          <p className="kicker">Parts index</p>
-          <p className="font-mono text-[10px] tabular-nums text-muted">{modelled} indexed</p>
+          <p className="kicker">Find a component</p>
+          <p className="font-mono text-[10px] tabular-nums text-muted">{list.length} {filtered ? "shown" : "parts"}</p>
         </div>
         <label className="sr-only" htmlFor={searchId}>Search parts or symptoms</label>
         <div className="relative mt-3">
@@ -42,7 +48,7 @@ export function PartsNav({ onPick, plain }: { onPick?: () => void; plain?: boole
           <input
             id={searchId}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(event) => setQuery(event.target.value)}
             placeholder="Part or symptom…"
             className="h-11 w-full rounded-[4px] border border-border bg-bg/84 pr-10 pl-9 text-sm text-fg placeholder:text-muted"
             suppressHydrationWarning
@@ -53,46 +59,78 @@ export function PartsNav({ onPick, plain }: { onPick?: () => void; plain?: boole
             </button>
           ) : null}
         </div>
+
+        <div className="mt-2 flex flex-wrap gap-1" role="group" aria-label="Common issues">
+          {QUICK_ISSUES.map((issue) => (
+            <button
+              key={issue.query}
+              type="button"
+              onClick={() => {
+                setSystem("all");
+                setQuery(issue.query);
+              }}
+              className={cn(
+                "h-10 rounded-[3px] border px-2.5 text-[11px] font-medium tracking-[0.02em] sm:h-8",
+                "motion-safe:transition-[color,background-color,border-color] motion-safe:duration-150",
+                query.toLowerCase() === issue.query
+                  ? "border-border-strong bg-elevated text-fg"
+                  : "border-border text-muted hover:border-border-strong hover:text-fg",
+              )}
+            >
+              {issue.label}
+            </button>
+          ))}
+        </div>
       </div>
-      <div className="hud-scroll flex gap-1 overflow-x-auto border-b border-border px-2 py-1.5">
-        {engineSystems.map((s) => (
+
+      <div className="hud-scroll flex gap-1 overflow-x-auto border-b border-border px-2 py-1.5" aria-label="Filter by system">
+        {engineSystems.map((entry) => (
           <button
-            key={s.id}
+            key={entry.id}
             type="button"
-            onClick={() => setSystem(s.id)}
+            onClick={() => setSystem(entry.id)}
             className={cn(
-              "h-9 shrink-0 rounded-[3px] px-2.5 text-[11px] font-medium tracking-[0.02em]",
+              "h-10 shrink-0 rounded-[3px] px-2.5 text-[11px] font-medium tracking-[0.02em] sm:h-9",
               "motion-safe:transition-[color,background-color] motion-safe:duration-150",
-              system === s.id ? "bg-elevated text-fg" : "text-muted hover:text-fg",
+              system === entry.id ? "bg-elevated text-fg" : "text-muted hover:text-fg",
             )}
-          >{s.short}</button>
+            aria-pressed={system === entry.id}
+          >{entry.short}</button>
         ))}
       </div>
+
       <div className="min-h-0 flex-1 overflow-y-auto py-2" aria-label="Engine components">
-        {groups.map((g) => (
-          <section key={g.id} className="mb-2">
-            <p className="sticky top-0 z-[1] bg-surface/96 px-3 py-2 backdrop-blur-sm"><span className="kicker">{g.index} · {g.label}</span></p>
+        {groups.map((group) => (
+          <section key={group.id} className="mb-2">
+            <p className="sticky top-0 z-[1] bg-surface/96 px-3 py-2 backdrop-blur-sm"><span className="kicker">{group.index} · {group.label}</span></p>
             <ul>
-              {g.parts.map((c) => (
-                <li key={c.id}>
+              {group.parts.map((component) => (
+                <li key={component.id}>
                   <button
                     type="button"
-                    onClick={() => { select(c.id); onPick?.(); }}
+                    onClick={() => { select(component.id); onPick?.(); }}
                     className={cn(
                       "flex min-h-12 w-full flex-col items-start gap-1 border-l-2 px-3 py-2.5 text-left",
                       "motion-safe:transition-[color,background-color,border-color] motion-safe:duration-150",
-                      selected === c.id ? "border-accent bg-elevated text-fg" : "border-transparent text-muted hover:bg-elevated/60 hover:text-fg",
+                      selected === component.id ? "border-accent bg-elevated text-fg" : "border-transparent text-muted hover:bg-elevated/60 hover:text-fg",
                     )}
                   >
-                    <span className="text-sm font-medium text-fg">{c.canonicalName}</span>
-                    <span className="text-xs text-muted">{c.bayOnly ? "Engine bay" : c.diagramOnly ? "Diagram only" : systemById[c.system]?.short}</span>
+                    <span className="text-sm font-medium text-fg">{component.canonicalName}</span>
+                    <span className="text-xs text-muted">
+                      {component.bayOnly ? "Engine bay" : component.diagramOnly ? "Diagram only" : systemById[component.system]?.short}
+                    </span>
                   </button>
                 </li>
               ))}
             </ul>
           </section>
         ))}
-        {list.length === 0 && <p className="px-3 py-6 text-sm text-muted">No matching part or symptom.</p>}
+        {list.length === 0 ? (
+          <div className="px-3 py-6">
+            <p className="text-sm text-fg">No matching component.</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted">Try a part name, common alias, or a shorter symptom phrase.</p>
+          </div>
+        ) : null}
       </div>
     </aside>
   );
