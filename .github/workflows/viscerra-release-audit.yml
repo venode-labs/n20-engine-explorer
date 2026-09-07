@@ -2,7 +2,7 @@ name: Viscerra release audit
 
 on:
   push:
-    branches: [viscerra-takeover, viscerra-production-integration, main]
+    branches: [viscerra-takeover, viscerra-production-integration, viscerra-final-master-audit, main]
   workflow_dispatch:
 
 permissions:
