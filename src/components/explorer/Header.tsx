@@ -6,7 +6,7 @@ const views = [
   { id: "engine", label: "Engine", mobileLabel: "Engine" },
   { id: "systems", label: "Systems", mobileLabel: "Sys" },
   { id: "bay", label: "Bay", mobileLabel: "Bay" },
-  { id: "technical", label: "Notes", mobileLabel: "Notes" },
+  { id: "technical", label: "Reference", mobileLabel: "Info" },
 ] as const;
 
 export function Header() {
@@ -25,22 +25,22 @@ export function Header() {
 
       <nav className="hud-scroll mx-auto min-w-0 overflow-x-auto" aria-label="Primary">
         <div className="flex h-full items-stretch">
-          {views.map((v) => (
+          {views.map((view) => (
             <button
-              key={v.id}
+              key={view.id}
               type="button"
-              onClick={() => setAppView(v.id)}
+              onClick={() => setAppView(view.id)}
               className={cn(
                 "relative flex h-full min-w-10 items-center justify-center px-1.5 text-[10px] tracking-[0.045em] sm:min-w-14 sm:px-3 sm:text-[11px] sm:tracking-[0.06em]",
                 "text-muted transition-colors duration-150 hover:text-fg",
-                appView === v.id && "text-fg",
+                appView === view.id && "text-fg",
               )}
-              aria-label={v.label}
-              aria-current={appView === v.id ? "page" : undefined}
+              aria-label={view.label}
+              aria-current={appView === view.id ? "page" : undefined}
             >
-              <span className="sm:hidden">{v.mobileLabel}</span>
-              <span className="hidden sm:inline">{v.label}</span>
-              {appView === v.id ? <span className="absolute right-1.5 bottom-0 left-1.5 h-px bg-accent sm:right-3 sm:left-3" /> : null}
+              <span className="sm:hidden">{view.mobileLabel}</span>
+              <span className="hidden sm:inline">{view.label}</span>
+              {appView === view.id ? <span className="absolute right-1.5 bottom-0 left-1.5 h-px bg-accent sm:right-3 sm:left-3" /> : null}
             </button>
           ))}
         </div>
